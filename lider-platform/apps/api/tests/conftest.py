@@ -11,8 +11,8 @@ from sqlalchemy.pool import NullPool
 from core.database import Base
 from core.config import settings
 
-# 테스트용 데이터베이스 URL
-TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/lider_test"
+# 테스트용 데이터베이스 URL (SQLite)
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./lider_test.db"
 
 # 테스트용 엔진
 engine = create_async_engine(

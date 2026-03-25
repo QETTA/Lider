@@ -1,11 +1,10 @@
 """
 LIDER 데이터베이스 연결 및 ORM 설정
-SQLAlchemy 2.0 비동기 지원
+SQLAlchemy 2.0 비동기 지원 (SQLite/PostgreSQL 호환)
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base, DeclarativeBase
 from sqlalchemy import Column, String, DateTime, Text, Float, Integer, Boolean, JSON, ForeignKey, Index, Numeric
-from sqlalchemy.dialects.postgresql import UUID, ENUM
 from datetime import datetime
 import uuid
 
@@ -17,14 +16,40 @@ class Base(DeclarativeBase):
     pass
 
 
-# 비동기 엔진 생성
-engine = create_async_engine(
-    str(settings.DATABASE_URL),
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    echo=settings.DEBUG,
-    future=True
-)
+# 데이터베이스 타입 호환성 처리
+if "sqlite" in str(settings.DATABASE_URL):
+    # SQLite용 타입
+    from sqlalchemy import String as UUIDType
+    from sqlalchemy import Float as NumericType
+    from sqlalchemy import func
+    
+    def generate_uuid():
+        return str(uuid.uuid4())
+else:
+    # PostgreSQL용 타입
+    from sqlalchemy.dialects.postgresql import UUID as UUIDType
+    from sqlalchemy.dialects.postgresql import Numeric as NumericType
+    
+    def generate_uuid():
+        return uuid.uuid4()
+
+
+# 비동기 엔진 생성 (SQLite/PostgreSQL)
+database_url = str(settings.DATABASE_URL)
+if "sqlite" in database_url:
+    engine = create_async_engine(
+        database_url,
+        echo=settings.DEBUG,
+        future=True
+    )
+else:
+    engine = create_async_engine(
+        database_url,
+        pool_size=settings.DATABASE_POOL_SIZE,
+        max_overflow=settings.DATABASE_MAX_OVERFLOW,
+        echo=settings.DEBUG,
+        future=True
+    )
 
 # 비동기 세션 팩토리
 async_session_maker = async_sessionmaker(
@@ -54,14 +79,14 @@ class Session(Base):
     """사용자 세션 테이블"""
     __tablename__ = "sessions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     user_id = Column(String(255), nullable=False, index=True)
     org_id = Column(String(255), nullable=True, index=True)
     context = Column(JSON, default=dict)  # 대화 컨텍스트
-    metadata = Column(JSON, default=dict)   # 추가 메타데이터
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
+    meta_data = Column(JSON, default=dict)   # 추가 메타데이터
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
     
     __table_args__ = (
         Index('idx_sessions_user_org', 'user_id', 'org_id'),
@@ -73,7 +98,7 @@ class RequestLog(Base):
     """API 요청 로그 테이블"""
     __tablename__ = "request_logs"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     request_id = Column(String(64), unique=True, nullable=False, index=True)
     user_id = Column(String(255), nullable=False, index=True)
     org_id = Column(String(255), nullable=True)
@@ -90,15 +115,15 @@ class RequestLog(Base):
     completion_tokens = Column(Integer, default=0)
     total_tokens = Column(Integer, default=0)
     
-    # 비용 및 성능
-    estimated_cost_usd = Column(Numeric(10, 6), default=0)
+    # 비용 및 성능 (SQLite는 Float 사용)
+    estimated_cost_usd = Column(Float, default=0)
     latency_ms = Column(Integer, default=0)
     
     # 검증 결과
     validation_result = Column(JSON, default=dict)
     error_code = Column(String(50), nullable=True)
     
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     __table_args__ = (
         Index('idx_logs_user_time', 'user_id', 'created_at'),
@@ -111,7 +136,7 @@ class Extraction(Base):
     """문서 추출 결과 테이블"""
     __tablename__ = "extractions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     request_id = Column(String(64), ForeignKey('request_logs.request_id'), nullable=False)
     user_id = Column(String(255), nullable=False, index=True)
     org_id = Column(String(255), nullable=True)
@@ -130,7 +155,7 @@ class Extraction(Base):
     processing_time_ms = Column(Integer, default=0)
     confidence_avg = Column(Float, default=0)
     
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
     
     __table_args__ = (
         Index('idx_extractions_user', 'user_id', 'created_at'),
@@ -142,7 +167,7 @@ class ActionPreview(Base):
     """액션 미리보기 테이블"""
     __tablename__ = "action_previews"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     preview_id = Column(String(64), unique=True, nullable=False, index=True)
     request_id = Column(String(64), ForeignKey('request_logs.request_id'), nullable=False)
     user_id = Column(String(255), nullable=False, index=True)
@@ -161,11 +186,11 @@ class ActionPreview(Base):
     # 상태
     approved = Column(Boolean, nullable=True)
     approved_by = Column(String(255), nullable=True)
-    approved_at = Column(DateTime(timezone=True), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
     executed = Column(Boolean, default=False)
     
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
     
     __table_args__ = (
         Index('idx_previews_user', 'user_id', 'created_at'),
@@ -176,7 +201,7 @@ class ActionExecution(Base):
     """액션 실행 로그 테이블"""
     __tablename__ = "action_executions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     execution_id = Column(String(64), unique=True, nullable=False, index=True)
     preview_id = Column(String(64), ForeignKey('action_previews.preview_id'), nullable=True)
     request_id = Column(String(64), ForeignKey('request_logs.request_id'), nullable=False)
@@ -194,8 +219,8 @@ class ActionExecution(Base):
     rollback_executed = Column(Boolean, default=False)
     rollback_result = Column(JSON, nullable=True)
     
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, index=True)
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    completed_at = Column(DateTime, nullable=True)
     
     __table_args__ = (
         Index('idx_executions_user', 'user_id', 'created_at'),
@@ -207,7 +232,7 @@ class BadCase(Base):
     """품질 이슈 배드케이스 테이블"""
     __tablename__ = "badcases"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     case_id = Column(String(64), unique=True, nullable=False, index=True)
     request_id = Column(String(64), ForeignKey('request_logs.request_id'), nullable=True)
     
@@ -226,8 +251,8 @@ class BadCase(Base):
     assigned_to = Column(String(255), nullable=True)
     resolution = Column(Text, nullable=True)
     
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, index=True)
-    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    resolved_at = Column(DateTime, nullable=True)
     
     __table_args__ = (
         Index('idx_badcases_category', 'category', 'status'),
@@ -246,14 +271,14 @@ class User(Base):
     
     # 사용량 추적
     total_requests = Column(Integer, default=0)
-    total_cost_usd = Column(Numeric(10, 6), default=0)
+    total_cost_usd = Column(Float, default=0)
     
     # 상태
     is_active = Column(Boolean, default=True)
-    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    last_login_at = Column(DateTime, nullable=True)
     
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     __table_args__ = (
         Index('idx_users_org', 'org_id', 'created_at'),

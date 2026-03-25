@@ -1,0 +1,47 @@
+{
+  "test_id": "action/close_ticket_owner_001",
+  "category": "action_preview",
+  "input": {
+    "session_id": "test_sess_001",
+    "user_id": "agent_001",
+    "org_id": "org_test",
+    "action_type": "ticket_close",
+    "target_system": "zendesk",
+    "parameters": {
+      "ticket_id": "T-1001",
+      "reason": "문제 해결됨"
+    },
+    "locale": "ko-KR"
+  },
+  "mock_context": {
+    "ticket": {
+      "id": "T-1001",
+      "subject": "로그인 문제",
+      "requester": "customer@example.com",
+      "assignee": "agent_001",
+      "status": "solved",
+      "created_at": "2024-03-20T10:00:00Z"
+    },
+    "user_permissions": {
+      "can_close": true,
+      "is_owner": true,
+      "is_admin": false
+    }
+  },
+  "expected_behavior": {
+    "allowed": true,
+    "missing_checks": [],
+    "impact_summary_must_contain": ["T-1001", "종료"],
+    "risks_expected": ["low"],
+    "human_confirmation_required": false,
+    "preconditions_must_pass": ["user_permission", "target_exists"]
+  },
+  "evaluation_criteria": {
+    "permission_check_accuracy": 1.0,
+    "risk_assessment_correct": true,
+    "allowed_decision_correct": true
+  },
+  "tags": ["ticket_close", "owner", "allowed"],
+  "created_at": "2026-03-24",
+  "last_updated": "2026-03-24"
+}

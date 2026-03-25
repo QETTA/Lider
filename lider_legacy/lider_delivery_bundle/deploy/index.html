@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lider Patched Final Design</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">L</div>
+        <div>
+          <p class="eyebrow">Patched deploy build</p>
+          <h1>Lider Final Design v0.2</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="pill success">배포 가능 정적 빌드</span>
+        <button id="themeToggle" class="ghost-btn" type="button" aria-label="테마 전환">테마 전환</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">현재 대화 기준 패치 적용본</p>
+        <h2>AI 설명과 확정 데이터를 분리하고, 위험 액션은 반드시 Preview를 거치도록 고친 최종안</h2>
+        <p class="hero-text">
+          이 빌드는 원본 소스가 없는 상태에서 현재 채팅에서 확정된 Lider 구조를 바탕으로 재구성한 패치 배포본입니다.
+          Search, Extract, Action Preview, Router Map 흐름을 바로 검토할 수 있습니다.
+        </p>
+        <div class="hero-actions">
+          <button class="primary-btn" data-target="search">Search Assist 보기</button>
+          <button class="secondary-btn" data-target="extract">Document Extract 보기</button>
+        </div>
+      </div>
+      <div class="hero-side panel">
+        <div class="metric-grid">
+          <article class="metric-card">
+            <span class="metric-label">기본 모델</span>
+            <strong>k2-0905 / k2-thinking / k2.5</strong>
+            <small>기능별 라우팅</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">고가치 fallback</span>
+            <strong>Claude Sonnet 4.6</strong>
+            <small>긴 문맥 / 최종 한국어 품질</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">액션 정책</span>
+            <strong>Preview 먼저</strong>
+            <small>Execute는 백엔드만</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">출력 정책</span>
+            <strong>JSON object</strong>
+            <small>top-level object 고정</small>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <nav class="tabbar" aria-label="페이지 전환">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="search">Search Assist</button>
+      <button class="tab" data-tab="extract">Document Extract</button>
+      <button class="tab" data-tab="action">Action Preview</button>
+      <button class="tab" data-tab="router">Router Map</button>
+    </nav>
+
+    <main>
+      <section class="tab-panel active" id="overview">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Patch summary</p>
+              <h3>이번 패치에서 바로 보이는 개선점</h3>
+            </div>
+            <span class="pill info">원본 미제공 상태 재구성</span>
+          </div>
+          <div class="cards three">
+            <article class="card">
+              <h4>근거 중심 응답</h4>
+              <p>검증된 사실, 추천 문장, 불확실성을 시각적으로 분리했습니다. Search 결과는 source chip 없이 단정하지 않도록 설계했습니다.</p>
+            </article>
+            <article class="card">
+              <h4>문서 추출 분리</h4>
+              <p>문서 업로드는 추출 JSON → validator 경고 → 사람용 요약 순서로 분리했습니다. 추출 실패는 warning으로 드러납니다.</p>
+            </article>
+            <article class="card">
+              <h4>위험 액션 안전화</h4>
+              <p>승인·변경·종료는 Preview 중심 UX로 변경했습니다. 권한과 missing checks가 먼저 보이며 execute는 비활성입니다.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Design fixes</p>
+                <h3>가정 기반으로 바로 잡은 최종 디자인 오류</h3>
+              </div>
+            </div>
+            <ul class="bullet-list">
+              <li>긴 JSON / 긴 텍스트 overflow 방지</li>
+              <li>모바일에서 카드가 두 줄 이상으로 자연스럽게 내려가도록 보정</li>
+              <li>CTA 위계 재정렬: Preview와 Execute 명확 분리</li>
+              <li>탭 overflow 및 sticky header 개선</li>
+              <li>상태 배지 대비와 키보드 focus ring 추가</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Operational principles</p>
+                <h3>Lider 운영 원칙</h3>
+              </div>
+            </div>
+            <div class="chip-grid">
+              <span class="chip">Model = 설명기</span>
+              <span class="chip">DB/Rule = 진실의 원천</span>
+              <span class="chip">Action = Preview first</span>
+              <span class="chip">Output = JSON object</span>
+              <span class="chip">Vision = K2.5</span>
+              <span class="chip">Search Planner = K2 Thinking</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="search">
+        <div class="grid two uneven">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Search Assist</p>
+                <h3>통합 검색 + 사실 기반 답변</h3>
+              </div>
+              <span class="pill warning">Planner → Tools → Finalizer</span>
+            </div>
+            <label class="field-label" for="searchInput">질문</label>
+            <textarea id="searchInput" rows="4" class="input-area">지난주 고객 이슈를 요약하고, 아직 미해결 티켓이 있으면 알려줘</textarea>
+            <div class="button-row">
+              <button id="runSearch" class="primary-btn" type="button">데모 실행</button>
+              <button class="ghost-btn sample-case" data-case="lead">리드 브리프 예시</button>
+              <button class="ghost-btn sample-case" data-case="analytics">리포트 분석 예시</button>
+            </div>
+
+            <div class="subpanel">
+              <div class="mini-head">
+                <strong>검색 계획</strong>
+                <span class="pill neutral" id="plannerModel">kimi-k2-thinking</span>
+              </div>
+              <ol id="toolPlan" class="ordered"></ol>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Grounded answer</p>
+                <h3>검증된 사실과 제안 분리</h3>
+              </div>
+              <span class="pill success" id="groundedBadge">근거 포함</span>
+            </div>
+
+            <div class="fact-box">
+              <h4>검증된 사실</h4>
+              <div id="facts" class="fact-list"></div>
+            </div>
+
+            <div class="answer-box">
+              <h4>최종 응답</h4>
+              <p id="answerText"></p>
+            </div>
+
+            <div class="uncertainty-box">
+              <h4>확인 필요</h4>
+              <ul id="uncertainties" class="bullet-list compact"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="extract">
+        <div class="grid two uneven">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Document Extract</p>
+                <h3>문서 업로드 → JSON 추출 → Validator</h3>
+              </div>
+              <span class="pill info">K2.5 → Validator → Finalizer</span>
+            </div>
+
+            <div class="dropzone">
+              <div class="dropzone-icon">⬆</div>
+              <p>원본이 없으므로 샘플 문서를 선택해 데모를 실행하세요.</p>
+              <div class="button-row">
+                <button class="secondary-btn extract-sample" data-sample="poster">포스터 샘플</button>
+                <button class="secondary-btn extract-sample" data-sample="invoice">인보이스 샘플</button>
+                <button class="secondary-btn extract-sample" data-sample="screen">스크린샷 샘플</button>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="mini-head">
+                <strong>Validator 상태</strong>
+                <span class="pill neutral" id="validatorStatus">대기중</span>
+              </div>
+              <ul id="extractWarnings" class="bullet-list compact"></ul>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Structured output</p>
+                <h3>기계가 읽는 JSON</h3>
+              </div>
+              <button id="copyJson" class="ghost-btn" type="button">JSON 복사</button>
+            </div>
+            <pre id="jsonOutput" class="code-block">{}</pre>
+
+            <div class="summary-card">
+              <h4>사람용 요약</h4>
+              <p id="extractSummary">샘플을 선택하면 요약이 표시됩니다.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="action">
+        <div class="grid two uneven">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Safe action</p>
+                <h3>실행 전에 Preview와 정책 검사를 먼저</h3>
+              </div>
+              <span class="pill danger">Execute 분리</span>
+            </div>
+
+            <label class="field-label" for="actionType">액션 종류</label>
+            <select id="actionType" class="select">
+              <option value="close_ticket">티켓 종료</option>
+              <option value="change_tier">고객 등급 변경</option>
+              <option value="approve_refund">환불 승인</option>
+            </select>
+
+            <label class="field-label" for="actionReason">사유</label>
+            <textarea id="actionReason" rows="3" class="input-area">중복 문의로 확인되어 종료 요청</textarea>
+
+            <div class="button-row">
+              <button id="previewAction" class="primary-btn" type="button">Preview 생성</button>
+              <button class="disabled-btn" type="button" disabled>Execute (백엔드 전용)</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Preview result</p>
+                <h3>권한·영향·누락 검사를 먼저 노출</h3>
+              </div>
+              <span class="pill neutral" id="actionAllowedBadge">대기</span>
+            </div>
+
+            <div class="status-card">
+              <h4>영향 요약</h4>
+              <p id="impactSummary">아직 preview가 생성되지 않았습니다.</p>
+            </div>
+
+            <div class="status-card">
+              <h4>누락된 체크</h4>
+              <ul id="missingChecks" class="bullet-list compact"></ul>
+            </div>
+
+            <div class="status-card">
+              <h4>다음 단계</h4>
+              <p id="nextStep">Preview를 생성하면 다음 단계가 표시됩니다.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="router">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Router map</p>
+              <h3>화면/행동별 모델 배치</h3>
+            </div>
+            <span class="pill info">화면 안에서 버튼별 라우팅</span>
+          </div>
+
+          <div class="table-wrap">
+            <table class="router-table">
+              <thead>
+                <tr>
+                  <th>화면 / 행동</th>
+                  <th>Primary</th>
+                  <th>후속 단계</th>
+                  <th>진실의 원천</th>
+                  <th>주의점</th>
+                </tr>
+              </thead>
+              <tbody id="routerTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">API contracts</p>
+                <h3>권장 진입점</h3>
+              </div>
+            </div>
+            <div class="chip-grid">
+              <span class="chip mono">POST /v1/assist</span>
+              <span class="chip mono">POST /v1/extract</span>
+              <span class="chip mono">POST /v1/actions/preview</span>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Non-negotiables</p>
+                <h3>절대 원칙</h3>
+              </div>
+            </div>
+            <ul class="bullet-list">
+              <li>top-level JSON object 고정</li>
+              <li>write action은 모델이 직접 실행하지 않음</li>
+              <li>freshness / status / permission은 DB/Rule 우선</li>
+              <li>vision 해석과 최신 웹검색은 한 턴에 섞지 않음</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Included in bundle: chat transcript + patched deploy preview</span>
+      <span>Original source not provided; this build is reconstructed from the conversation.</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

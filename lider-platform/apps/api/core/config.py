@@ -4,7 +4,7 @@ Pydantic Settings 기반 환경 설정
 """
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field, PostgresDsn, RedisDsn
+from pydantic import Field, AnyUrl, RedisDsn
 
 
 class Settings(BaseSettings):
@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     PORT: int = 8000
     LOG_LEVEL: str = "INFO"
     
-    # 데이터베이스 설정
-    DATABASE_URL: PostgresDsn = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/lider"
+    # 데이터베이스 설정 (PostgreSQL/SQLite 지원)
+    DATABASE_URL: str = Field(
+        default="sqlite+aiosqlite:///./lider_dev.db"
     )
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10

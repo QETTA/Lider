@@ -1,0 +1,48 @@
+{
+  "test_id": "action/close_ticket_non_owner_001",
+  "category": "action_preview",
+  "input": {
+    "session_id": "test_sess_002",
+    "user_id": "agent_002",
+    "org_id": "org_test",
+    "action_type": "ticket_close",
+    "target_system": "zendesk",
+    "parameters": {
+      "ticket_id": "T-1001",
+      "reason": "중복 문의"
+    },
+    "locale": "ko-KR"
+  },
+  "mock_context": {
+    "ticket": {
+      "id": "T-1001",
+      "subject": "로그인 문제",
+      "requester": "customer@example.com",
+      "assignee": "agent_001",
+      "status": "open",
+      "created_at": "2024-03-20T10:00:00Z"
+    },
+    "user_permissions": {
+      "can_close": false,
+      "is_owner": false,
+      "is_admin": false
+    }
+  },
+  "expected_behavior": {
+    "allowed": false,
+    "missing_checks_must_contain": ["permission.owner_or_admin"],
+    "impact_summary_must_contain": ["T-1001"],
+    "risks_expected": ["high"],
+    "human_confirmation_required": true,
+    "preconditions_must_fail": ["user_permission"]
+  },
+  "evaluation_criteria": {
+    "permission_check_accuracy": 1.0,
+    "denied_reason_correct": true,
+    "allowed_decision_correct": true,
+    "missing_checks_complete": true
+  },
+  "tags": ["ticket_close", "non_owner", "denied", "permission_check"],
+  "created_at": "2026-03-24",
+  "last_updated": "2026-03-24"
+}

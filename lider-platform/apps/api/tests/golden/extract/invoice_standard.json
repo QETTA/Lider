@@ -1,0 +1,44 @@
+{
+  "test_id": "extract/invoice_standard_001",
+  "category": "extract",
+  "input": {
+    "file_id": "file_invoice_001",
+    "user_id": "test_agent_001",
+    "org_id": "org_test",
+    "file_type": "pdf",
+    "extract_type": "invoice",
+    "output_schema": [
+      {"field_name": "invoice_number", "field_type": "string", "required": true, "description": "영수증 번호"},
+      {"field_name": "issue_date", "field_type": "date", "required": true, "description": "발행일"},
+      {"field_name": "seller_name", "field_type": "string", "required": true, "description": "판매자명"},
+      {"field_name": "buyer_name", "field_type": "string", "required": true, "description": "구매자명"},
+      {"field_name": "total_amount", "field_type": "number", "required": true, "description": "총액"},
+      {"field_name": "tax_amount", "field_type": "number", "required": false, "description": "세액"},
+      {"field_name": "items", "field_type": "array", "required": false, "description": "품목 목록"}
+    ],
+    "locale": "ko-KR"
+  },
+  "mock_ocr_content": "전자세금계산서\\n승인번호: 20240315000001\\n발행일: 2024년 03월 15일\\n공급자: 주식회사테스트판매 (사업자: 123-45-67890)\\n공급받는자: 주식회사ABC구매 (사업자: 987-65-43210)\\n공급가액: 1,000,000원\\n세액: 100,000원\\n합계금액: 1,100,000원\\n품목: 서비스 이용료 (2024.03.01~2024.03.31)",
+  "expected_behavior": {
+    "fields_required": ["invoice_number", "issue_date", "seller_name", "buyer_name", "total_amount"],
+    "expected_values": {
+      "invoice_number": "20240315000001",
+      "issue_date": "2024-03-15",
+      "seller_name": "주식회사테스트판매",
+      "buyer_name": "주식회사ABC구매",
+      "total_amount": 1100000,
+      "tax_amount": 100000
+    },
+    "confidence_threshold": 0.95,
+    "warnings_allowed": false
+  },
+  "evaluation_criteria": {
+    "field_recall": 1.0,
+    "numeric_accuracy": 1.0,
+    "date_accuracy": 1.0,
+    "confidence_avg": 0.95
+  },
+  "tags": ["invoice", "standard", "numeric_precision"],
+  "created_at": "2026-03-24",
+  "last_updated": "2026-03-24"
+}

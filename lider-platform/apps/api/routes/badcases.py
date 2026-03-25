@@ -367,6 +367,54 @@ async def update_badcase(
         )
 
 
+@router.delete("/badcases/{case_id}", response_model=dict, tags=["BadCases"])
+async def delete_badcase(
+    case_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(require_auth)
+):
+    """
+    배드케이스 삭제 (관리자 전용)
+    
+    - False positive 케이스 삭제
+    - 데이터 정리용
+    """
+    try:
+        result = await db.execute(
+            select(BadCase).where(BadCase.case_id == case_id)
+        )
+        badcase = result.scalar_one_or_none()
+        
+        if not badcase:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="배드케이스를 찾을 수 없습니다."
+            )
+        
+        await db.delete(badcase)
+        await db.commit()
+        
+        logger.info("badcase_deleted", case_id=case_id, deleted_by=user_id)
+        
+        return {
+            "success": True,
+            "data": {"deleted": True, "case_id": case_id},
+            "meta": {
+                "request_id": f"req_del_{case_id}",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("badcase_delete_error", error=str(e), case_id=case_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="배드케이스 삭제 중 오류가 발생했습니다."
+        )
+
+
 @router.get("/badcases/stats/summary", response_model=dict, tags=["BadCases"])
 async def get_badcase_stats(
     days: int = Query(30, ge=1, le=365, description="조회 일수"),

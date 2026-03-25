@@ -1,0 +1,59 @@
+{
+  "test_id": "assist/search_multi_source_001",
+  "category": "assist",
+  "input": {
+    "message": {
+      "text": "지난주 ABC Corp의 미해결 티켓과 최근 구매 내역을 요약해줘"
+    },
+    "session_id": "test_sess_002",
+    "user_id": "test_agent_001",
+    "org_id": "org_test",
+    "allowed_tools": ["ticket_read", "crm_lookup"],
+    "response_mode": "answer",
+    "risk_tier": "low"
+  },
+  "expected_behavior": {
+    "tools_called": ["crm_lookup", "ticket_read"],
+    "tool_order": ["crm_lookup", "ticket_read"],
+    "required_facts": ["unresolved_ticket_count", "recent_purchase_amount", "customer_name"],
+    "answer_must_contain": ["티켓", "구매", "ABC Corp"],
+    "answer_must_not_contain": ["추정", "아마도", "것 같습니다"],
+    "citations_min_count": 2
+  },
+  "expected_behavior": {
+    "tools_called": ["crm_lookup", "ticket_read"],
+    "tool_order": ["crm_lookup", "ticket_read"],
+    "tool_order_correct": true,
+    "required_facts": ["unresolved_ticket_count", "recent_purchase_amount", "customer_name"],
+    "answer_must_contain": ["티켓", "구매", "ABC Corp"],
+    "answer_must_not_contain": ["추정", "아마도", "것 같습니다"],
+    "citations_min_count": 2
+  },
+  "evaluation_criteria": {
+    "tool_accuracy": 1.0,
+    "fact_f1": 0.95,
+    "groundedness": 1.0,
+    "no_hallucination": true
+  },
+  "mock_data": {
+    "crm_lookup": {
+      "id": "cust_abc_001",
+      "name": "ABC Corp",
+      "tier": "enterprise",
+      "recent_purchases": [
+        {"item": "License", "amount": 50000, "date": "2024-03-15"}
+      ]
+    },
+    "ticket_read": {
+      "unresolved_count": 3,
+      "tickets": [
+        {"id": "T-1001", "subject": "Login issue", "status": "open"},
+        {"id": "T-1002", "subject": "Feature request", "status": "pending"},
+        {"id": "T-1003", "subject": "Billing question", "status": "open"}
+      ]
+    }
+  },
+  "tags": ["multi_tool", "crm_integration", "ticket_integration"],
+  "created_at": "2026-03-24",
+  "last_updated": "2026-03-24"
+}

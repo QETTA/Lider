@@ -18,7 +18,7 @@ from core.middleware import (
     PIIRedactionMiddleware,
     RequestLoggingMiddleware
 )
-from routes import assist, extract, action_preview, sessions, files, health, users
+from routes import assist, extract, action_preview, sessions, files, health, users, badcases, metrics
 
 logger = structlog.get_logger()
 
@@ -72,6 +72,8 @@ app.include_router(assist.router, prefix="/v1", tags=["Assist"])
 app.include_router(extract.router, prefix="/v1", tags=["Extract"])
 app.include_router(action_preview.router, prefix="/v1", tags=["Actions"])
 app.include_router(users.router, prefix="/v1", tags=["Users"])
+app.include_router(badcases.router, prefix="/v1", tags=["BadCases"])
+app.include_router(metrics.router, prefix="/v1", tags=["Metrics"])
 
 
 @app.exception_handler(Exception)

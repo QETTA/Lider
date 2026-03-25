@@ -1,0 +1,38 @@
+{
+  "test_id": "extract/screenshot_ui_001",
+  "category": "extract",
+  "input": {
+    "file_id": "file_screen_001",
+    "user_id": "test_agent_001",
+    "org_id": "org_test",
+    "file_type": "image",
+    "extract_type": "screen",
+    "output_schema": [
+      {"field_name": "ui_type", "field_type": "string", "required": true, "description": "화면 유형"},
+      {"field_name": "page_title", "field_type": "string", "required": false, "description": "페이지 제목"},
+      {"field_name": "current_user", "field_type": "string", "required": false, "description": "현재 사용자"},
+      {"field_name": "error_message", "field_type": "string", "required": false, "description": "에러 메시지"},
+      {"field_name": "buttons_visible", "field_type": "array", "required": false, "description": "보이는 버튼들"}
+    ],
+    "locale": "ko-KR"
+  },
+  "mock_ocr_content": "사용자 관리 대시보드\\n현재 사용자: admin@company.com\\n상단 메뉴: 홈 | 사용자 | 설정 | 로그아웃\\n버튼: [사용자 추가] [보내기] [필터]\\n테이블: 사용자 목록 (3건)\\n- 홍길동 (hong@example.com) - 활성\\n- 김철수 (kim@example.com) - 활성\\n- 박영희 (park@example.com) - 비활성",
+  "expected_behavior": {
+    "expected_values": {
+      "ui_type": "dashboard",
+      "page_title": "사용자 관리 대시보드",
+      "current_user": "admin@company.com",
+      "error_message": null,
+      "buttons_visible": ["사용자 추가", "보내기", "필터"]
+    },
+    "confidence_threshold": 0.85
+  },
+  "evaluation_criteria": {
+    "field_recall": 0.9,
+    "value_accuracy": 0.9,
+    "ui_classification_correct": true
+  },
+  "tags": ["screenshot", "ui", "dashboard"],
+  "created_at": "2026-03-24",
+  "last_updated": "2026-03-24"
+}

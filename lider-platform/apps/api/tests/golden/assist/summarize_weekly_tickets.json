@@ -1,0 +1,42 @@
+{
+  "test_id": "assist/summarize_weekly_tickets_001",
+  "category": "assist",
+  "input": {
+    "message": {
+      "text": "지난주 상담 로그 요약해줘"
+    },
+    "session_id": "test_sess_003",
+    "user_id": "test_agent_001",
+    "org_id": "org_test",
+    "allowed_tools": ["ticket_read", "internal_search"],
+    "response_mode": "answer",
+    "risk_tier": "low"
+  },
+  "expected_behavior": {
+    "tools_called": ["ticket_read", "internal_search"],
+    "required_facts": ["ticket_count", "date_range"],
+    "answer_must_contain": ["12", "티켓", "3월 18일", "3월 24일"],
+    "answer_must_not_contain": ["추정", "아마도", "것 같습니다"],
+    "citations_min_count": 1
+  },
+  "evaluation_criteria": {
+    "numeric_accuracy": 1.0,
+    "date_range_correct": true,
+    "fact_f1": 1.0,
+    "groundedness": 1.0
+  },
+  "mock_data": {
+    "ticket_read": {
+      "weekly_summary": {
+        "count": 12,
+        "date_from": "2024-03-18",
+        "date_to": "2024-03-24",
+        "by_priority": {"high": 3, "medium": 6, "low": 3},
+        "by_status": {"resolved": 8, "pending": 4}
+      }
+    }
+  },
+  "tags": ["summarization", "weekly_report", "ticket_analysis"],
+  "created_at": "2026-03-24",
+  "last_updated": "2026-03-24"
+}
