@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Output
+dist/
+audit-results/
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test outputs
+*.png
+*.jpg
+*.jpeg
+*.mp4
+
+# Temporary files
+tmp/
+temp/
