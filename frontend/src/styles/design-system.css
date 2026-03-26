@@ -104,6 +104,8 @@
   --warning-surface-10: rgba(205, 88, 68, 0.1);
 
   /* Dark surface alpha tokens */
+  --dark-surface-10: rgba(39, 53, 45, 0.1);
+  --dark-surface-12: rgba(39, 53, 45, 0.12);
   --dark-surface-82: rgba(39, 53, 45, 0.82);
   --dark-surface-92: rgba(39, 53, 45, 0.92);
 
@@ -148,6 +150,40 @@
   --emotion-accent: var(--brand-600);
   --emotion-surface: rgba(93, 119, 105, 0.12);
   --emotion-border: rgba(93, 119, 105, 0.22);
+
+  /* Layout grid tokens */
+  --grid-hero: minmax(0, 1.08fr) minmax(340px, 0.82fr);
+  --grid-hero-sidebar: minmax(0, 236px) minmax(0, 1fr);
+  --grid-problem: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  --grid-why-now: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  --grid-report: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  --grid-steps: repeat(4, 1fr);
+
+  /* Typography tracking tokens */
+  --tracking-kicker: 0.28em;
+  --tracking-label: 0.26em;
+  --tracking-step: 0.28em;
+  --tracking-card: 0.24em;
+  --tracking-badge: 0.22em;
+  --tracking-mobile: 0.2em;
+  --tracking-tiny: 0.18em;
+  --tracking-min: 0.16em;
+
+  /* Line height tokens for display text */
+  --leading-hero: 0.98;
+  --leading-section: 1.02;
+  --leading-heading: 1.08;
+
+  /* Gradient definitions */
+  --gradient-light-card: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,248,244,0.94));
+  --gradient-hero-glass: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,248,244,0.94));
+  --gradient-why-now: linear-gradient(180deg, rgba(250,248,244,0.96), rgba(255,253,250,0.92));
+  --gradient-report: linear-gradient(160deg, rgba(39,53,45,0.98), rgba(52,70,60,0.96) 42%, rgba(19,125,128,0.9));
+  --gradient-dark-card: linear-gradient(180deg, rgba(39,53,45,0.96), rgba(52,70,60,0.94));
+  --gradient-dark-card-hover: linear-gradient(180deg, rgba(39,53,45,0.98), rgba(52,70,60,0.96));
+  --gradient-mobile-shell: linear-gradient(180deg, #27352d, #314238);
+  --gradient-mobile-bg: linear-gradient(180deg, rgba(248,246,241,0.98), rgba(255,253,250,0.96));
+  --gradient-white-fade: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.94));
 }
 
 [data-emotion-mode='morning'] {

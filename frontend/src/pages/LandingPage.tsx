@@ -252,7 +252,7 @@ export function LandingPage() {
   };
 
   return (
-    <div className="public-canvas min-h-screen pb-24 text-text-strong sm:pb-0">
+    <div data-emotion-mode="calm" className="public-canvas min-h-screen pb-24 text-text-strong sm:pb-0">
       <div className="public-grain relative isolate min-h-screen overflow-hidden">
         <header className="relative z-20 border-b border-border-subtle bg-surface-70 backdrop-blur-xl">
           <div className="mx-auto flex max-w-container-xl items-center justify-between px-5 py-5 sm:px-6 lg:px-8">
@@ -292,12 +292,12 @@ export function LandingPage() {
 
         <main>
           <section className="relative z-10 mx-auto max-w-container-xl px-5 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16 xl:py-18">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(340px,0.82fr)] lg:items-center xl:gap-10">
+            <div className="grid gap-8 lg:grid-cols-hero lg:items-center xl:gap-10">
               <div className="max-w-container-lg lg:pr-6">
-                <StatusBadge label="2026 운영 누락 진단 랜딩" variant="processing" dot={false} className="bg-[rgba(223,244,244,0.82)] text-action-700" />
+                <StatusBadge label="2026 운영 누락 진단 랜딩" variant="processing" dot={false} className="bg-surface-action-82 text-action-700" />
 
                 <h1
-                  className="public-display mt-5 max-w-ch-7 text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-brand-900 sm:max-w-ch-9 sm:text-7xl lg:text-8xl xl:text-9xl"
+                  className="public-display mt-5 max-w-ch-7 text-5xl font-semibold leading-hero tracking-tight-hero text-brand-900 sm:max-w-ch-9 sm:text-7xl lg:text-8xl xl:text-9xl"
                 >
                   기존 프로그램은 그대로, 운영 누락만 잡으세요.
                 </h1>
@@ -328,7 +328,7 @@ export function LandingPage() {
                   {heroProofCards.map((item) => (
                     <GlassCard
                       key={item.title}
-                      className="public-panel border-[rgba(71,96,83,0.1)] bg-[rgba(255,253,250,0.8)] p-4 shadow-card"
+                      className="public-panel border-border-brand-10 bg-surface-80 p-4 shadow-card"
                     >
                       <p className="text-sm font-semibold text-brand-900">{item.title}</p>
                       <p className="mt-2 text-sm leading-6 text-text-muted">{item.description}</p>
@@ -338,10 +338,10 @@ export function LandingPage() {
               </div>
 
               <div className="relative lg:justify-self-end">
-                <GlassCard className="public-panel overflow-hidden border-[rgba(71,96,83,0.12)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,248,244,0.94))] p-4 shadow-float sm:p-5">
+                <GlassCard className="public-panel overflow-hidden border-border-brand-12 bg-gradient-hero-glass p-4 shadow-float sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.26em] text-brand-700">Operations Diagnosis Board</p>
+                      <p className="text-xs uppercase tracking-label text-brand-700">Operations Diagnosis Board</p>
                       <p className="mt-2 text-xl font-semibold text-brand-900 sm:text-2xl">실제 모바일 화면으로 먼저 확인하세요</p>
                       <p className="mt-3 max-w-prose-narrow text-sm leading-6 text-text-muted">
                         히어로의 설명은 랜딩 타이포가 맡고, 실제 화면은 과장 없이 증빙 컷으로만 보여드립니다.
@@ -350,14 +350,14 @@ export function LandingPage() {
                     <StatusBadge label="실제 모바일 화면" variant="info" dot={false} />
                   </div>
 
-                  <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,236px)_minmax(0,1fr)] md:items-center">
+                  <div className="mt-4 grid gap-4 md:grid-cols-hero-sidebar md:items-center">
                     <MobilePreviewShell />
 
                     <div className="grid gap-3">
                       {heroPreviewNotes.map((note) => (
                         <div
                           key={note}
-                          className="rounded-2xl border border-[rgba(71,96,83,0.1)] bg-surface-78 px-4 py-3 text-sm leading-6 text-text-primary"
+                          className="rounded-2xl border border-border-brand-10 bg-surface-78 px-4 py-3 text-sm leading-6 text-text-primary"
                         >
                           {note}
                         </div>
@@ -371,7 +371,7 @@ export function LandingPage() {
 
           <section id="problem" className="relative z-10 scroll-mt-28 border-y border-border-subtle bg-surface-56">
             <div className="mx-auto max-w-container-xl px-5 py-20 sm:px-6 lg:px-8">
-              <div className="grid gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
+              <div className="grid gap-10 lg:grid-cols-problem lg:items-start">
                 <div className="max-w-container-md">
                   <SectionIntro
                     eyebrow="Problem"
@@ -379,8 +379,8 @@ export function LandingPage() {
                     description="장기요양기관 운영의 핵심은 기록을 남기는 일보다 누락을 빨리 발견하고 후속 조치까지 연결하는 일입니다. 손실은 늘 입력 직후가 아니라, 나중에 정산과 평가, 상담 후속에서 드러납니다."
                   />
 
-                  <GlassCard className="public-panel mt-8 border-[rgba(71,96,83,0.12)] bg-[linear-gradient(180deg,rgba(39,53,45,0.96),rgba(52,70,60,0.94))] p-6 text-white">
-                    <p className="text-xs uppercase tracking-[0.26em] text-white/62">What Breaks First</p>
+                  <GlassCard className="public-panel mt-8 border-border-brand-12 bg-gradient-dark-card p-6 text-white">
+                    <p className="text-xs uppercase tracking-label text-white/62">What Breaks First</p>
                     <p className="mt-3 text-2xl font-semibold">누락은 보통 한 부서에서 시작되지 않습니다.</p>
                     <p className="mt-4 text-sm leading-7 text-white/76">
                       청구, 평가, 상담, 기록이 따로 움직이는 순간 작은 공백이 운영 손실로 커집니다. 그래서
@@ -393,9 +393,9 @@ export function LandingPage() {
                   {painPoints.map((item) => (
                     <GlassCard
                       key={item.title}
-                      className="public-panel landing-sheen h-full border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.9)] p-6"
+                      className="public-panel landing-sheen h-full border-border-brand-12 bg-surface-90 p-6"
                     >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(71,96,83,0.14)] bg-[rgba(205,88,68,0.1)] text-[color:var(--warning-600)]">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border-brand-14 bg-warning-10 text-[color:var(--warning-600)]">
                         <AlertTriangle className="h-5 w-5" />
                       </div>
                       <h2 className="mt-5 text-xl font-semibold text-brand-900">{item.title}</h2>
@@ -408,8 +408,8 @@ export function LandingPage() {
           </section>
 
           <section id="why-now" className="relative z-10 scroll-mt-28 mx-auto max-w-container-xl px-5 py-20 sm:px-6 lg:px-8">
-            <div className="grid gap-6 lg:grid-cols-[1.02fr_0.98fr]">
-              <GlassCard className="public-panel border-[rgba(71,96,83,0.12)] bg-[linear-gradient(180deg,rgba(250,248,244,0.96),rgba(255,253,250,0.92))] p-7">
+            <div className="grid gap-6 lg:grid-cols-why-now">
+              <GlassCard className="public-panel border-border-brand-12 bg-gradient-why-now p-7">
                 <SectionIntro
                   eyebrow="Why Now"
                   title="2026년에는 운영과 제도 대응을 따로 볼 수 없습니다."
@@ -425,9 +425,9 @@ export function LandingPage() {
 
               <div className="grid gap-5">
                 {urgencyCards.map((item) => (
-                  <GlassCard key={item.title} className="public-panel border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.88)] p-6">
+                  <GlassCard key={item.title} className="public-panel border-border-brand-12 bg-surface-88 p-6">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[rgba(71,96,83,0.14)] bg-[rgba(223,244,244,0.72)] text-action-700">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-border-brand-14 bg-surface-action-72 text-action-700">
                         <item.icon className="h-5 w-5" />
                       </div>
                       <div>
@@ -441,7 +441,7 @@ export function LandingPage() {
             </div>
           </section>
 
-          <section id="solution" className="relative z-10 scroll-mt-28 border-y border-border-subtle bg-[rgba(250,248,244,0.74)]">
+          <section id="solution" className="relative z-10 scroll-mt-28 border-y border-border-subtle bg-surface-70">
             <div className="mx-auto max-w-container-xl px-5 py-20 sm:px-6 lg:px-8">
               <SectionIntro
                 eyebrow="Solution"
@@ -451,8 +451,8 @@ export function LandingPage() {
 
               <div className="mt-10 grid gap-5 lg:grid-cols-3">
                 {solutionCards.map((item) => (
-                  <GlassCard key={item.title} className="public-panel landing-sheen h-full border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.92)] p-6">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(71,96,83,0.14)] bg-[rgba(93,119,105,0.12)] text-brand-700">
+                  <GlassCard key={item.title} className="public-panel landing-sheen h-full border-border-brand-12 bg-surface-92 p-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border-brand-14 bg-brand-12 text-brand-700">
                       <item.icon className="h-5 w-5" />
                     </div>
                     <h2 className="mt-5 text-xl font-semibold text-brand-900">{item.title}</h2>
@@ -462,10 +462,10 @@ export function LandingPage() {
                 ))}
               </div>
 
-              <GlassCard className="public-panel mt-8 border-[rgba(71,96,83,0.12)] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(250,248,244,0.96))] p-6 md:p-7">
+              <GlassCard className="public-panel mt-8 border-border-brand-12 bg-gradient-light-card p-6 md:p-7">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.26em] text-brand-700">Linked Operations</p>
+                    <p className="text-xs uppercase tracking-label text-brand-700">Linked Operations</p>
                     <h2 className="mt-2 text-2xl font-semibold text-brand-900">운영 손실부터 기록 보완까지 하나의 흐름으로 연결합니다.</h2>
                   </div>
                   <StatusBadge label="누락 방지 중심" variant="warning" dot={false} />
@@ -474,9 +474,9 @@ export function LandingPage() {
                 <div className="mt-8 grid gap-4 lg:grid-cols-4">
                   {connectionSteps.map((step, index) => (
                     <div key={step.title} className="relative">
-                      <div className="rounded-2xl border border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.82)] px-5 py-5">
+                      <div className="rounded-2xl border border-border-brand-12 bg-surface-82 px-5 py-5">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-xs uppercase tracking-[0.28em] text-[color:var(--text-soft)]">Step {index + 1}</span>
+                          <span className="text-xs uppercase tracking-step text-[color:var(--text-soft)]">Step {index + 1}</span>
                           <CheckCircle2 className="h-4 w-4 text-brand-700" />
                         </div>
                         <p className="mt-4 text-lg font-semibold text-brand-900">{step.title}</p>
@@ -485,7 +485,7 @@ export function LandingPage() {
 
                       {index < connectionSteps.length - 1 && (
                         <div className="hidden lg:block">
-                          <div className="absolute right-[-14px] top-1/2 h-px w-7 -translate-y-1/2 bg-[rgba(71,96,83,0.16)]" />
+                          <div className="absolute right-[-14px] top-1/2 h-px w-7 -translate-y-1/2 bg-border-brand-16" />
                           <ArrowRight className="absolute right-[-18px] top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--brand-600)]" />
                         </div>
                       )}
@@ -497,11 +497,11 @@ export function LandingPage() {
           </section>
 
           <section id="report-preview" className="relative z-10 scroll-mt-28 mx-auto max-w-container-xl px-5 py-20 sm:px-6 lg:px-8">
-            <div className="grid gap-6 lg:grid-cols-[0.96fr_1.04fr]">
-              <GlassCard className="public-panel border-[rgba(71,96,83,0.12)] bg-[linear-gradient(160deg,rgba(39,53,45,0.98),rgba(52,70,60,0.96)_42%,rgba(19,125,128,0.9))] p-7 text-white">
-                <p className="text-xs uppercase tracking-[0.28em] text-white/62">Report Preview</p>
+            <div className="grid gap-6 lg:grid-cols-report">
+              <GlassCard className="public-panel border-border-brand-12 bg-gradient-report p-7 text-white">
+                <p className="text-xs uppercase tracking-kicker text-white/62">Report Preview</p>
                 <h2
-                  className="mt-4 text-4xl leading-[1.02] tracking-[-0.045em]"
+                  className="mt-4 text-4xl leading-section tracking-tight-section"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   먼저 문제를 보여드리고,
@@ -534,8 +534,8 @@ export function LandingPage() {
 
               <div className="grid gap-4">
                 {reportPreviewItems.map((item) => (
-                  <GlassCard key={item.title} className="public-panel landing-sheen border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.9)] p-6">
-                    <p className="text-xs uppercase tracking-[0.24em] text-brand-700">{item.label}</p>
+                  <GlassCard key={item.title} className="public-panel landing-sheen border-border-brand-12 bg-surface-90 p-6">
+                    <p className="text-xs uppercase tracking-card text-brand-700">{item.label}</p>
                     <h3 className="mt-3 text-xl font-semibold text-brand-900">{item.title}</h3>
                     <p className="mt-3 text-sm leading-7 text-text-primary">{item.description}</p>
                   </GlassCard>
@@ -543,8 +543,8 @@ export function LandingPage() {
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   {trustCards.map((item) => (
-                    <GlassCard key={item.label} className="public-panel border-[rgba(71,96,83,0.12)] bg-[rgba(250,248,244,0.96)] p-5">
-                      <p className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-soft)]">{item.label}</p>
+                    <GlassCard key={item.label} className="public-panel border-border-brand-12 bg-canvas-soft/96 p-5">
+                      <p className="text-xs uppercase tracking-card text-[color:var(--text-soft)]">{item.label}</p>
                       <p className="mt-3 text-xl font-semibold text-brand-900">{item.value}</p>
                       <p className="mt-3 text-sm leading-7 text-text-primary">{item.description}</p>
                     </GlassCard>
@@ -554,9 +554,9 @@ export function LandingPage() {
             </div>
           </section>
 
-          <section id="diagnosis-form" className="relative z-10 scroll-mt-28 border-t border-border-subtle bg-[rgba(255,253,250,0.62)]">
+          <section id="diagnosis-form" className="relative z-10 scroll-mt-28 border-t border-border-subtle bg-surface-56/62">
             <div className="mx-auto max-w-container-xl px-5 py-20 sm:px-6 lg:px-8">
-              <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-start">
+              <div className="grid gap-8 lg:grid-cols-why-now lg:items-start">
                 <div>
                   <SectionIntro
                     eyebrow="Free Diagnosis"
@@ -570,7 +570,7 @@ export function LandingPage() {
                     <TagPill icon={MessageSquare} text="메일 초안 기반 신청으로 바로 시작" />
                   </div>
 
-                  <GlassCard className="public-panel mt-8 border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.92)] p-6">
+                  <GlassCard className="public-panel mt-8 border-border-brand-12 bg-surface-92 p-6">
                     <form className="grid gap-4" onSubmit={handleDiagnosisSubmit}>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <DiagnosisField label="기관명">
@@ -641,7 +641,7 @@ export function LandingPage() {
                         </select>
                       </DiagnosisField>
 
-                      <div className="grid gap-3 pt-2 sm:grid-cols-[1fr_auto] sm:items-center">
+                      <div className="grid gap-3 pt-2 sm:grid-cols-form-submit sm:items-center">
                         <p className="text-sm leading-6 text-text-muted">
                           제출 버튼을 누르면 `support@yoyang-radar.kr`로 보낼 메일 초안이 열립니다.
                         </p>
@@ -655,24 +655,24 @@ export function LandingPage() {
                 </div>
 
                 <div className="grid gap-5 lg:sticky lg:top-28">
-                  <GlassCard className="public-panel landing-sheen border-[rgba(71,96,83,0.12)] bg-[linear-gradient(180deg,rgba(39,53,45,0.98),rgba(52,70,60,0.96))] p-6 text-white">
+                  <GlassCard className="public-panel landing-sheen border-border-brand-12 bg-gradient-dark-card p-6 text-white">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.26em] text-white/62">Mail Draft Preview</p>
+                        <p className="text-xs uppercase tracking-label text-white/62">Mail Draft Preview</p>
                         <p className="mt-2 text-xl font-semibold">입력 내용이 메일 초안으로 바로 정리됩니다.</p>
                       </div>
                       <StatusBadge label="공개 URL 없이 신청 가능" variant="success" dot={false} />
                     </div>
 
                     <div className="mt-6 rounded-2xl border border-white/10 bg-white/6 p-5">
-                      <p className="text-xs uppercase tracking-[0.22em] text-white/56">Subject</p>
+                      <p className="text-xs uppercase tracking-badge text-white/56">Subject</p>
                       <p className="mt-2 text-sm font-medium text-white/88">
                         [무료 운영 진단] {diagnosisForm.institutionName || '기관명 미입력'}
                       </p>
                     </div>
 
                     <div className="mt-4 rounded-2xl border border-white/10 bg-white/6 p-5">
-                      <p className="text-xs uppercase tracking-[0.22em] text-white/56">Body</p>
+                      <p className="text-xs uppercase tracking-badge text-white/56">Body</p>
                       <div className="mt-3 space-y-2 text-sm leading-7 text-white/82">
                         {emailBodyLines.map((line, index) => (
                           <p key={`${line}-${index}`} className={line ? '' : 'h-3'}>
@@ -691,8 +691,8 @@ export function LandingPage() {
                     </a>
                   </GlassCard>
 
-                  <GlassCard className="public-panel border-[rgba(71,96,83,0.12)] bg-[rgba(255,253,250,0.92)] p-6">
-                    <p className="text-xs uppercase tracking-[0.26em] text-brand-700">FAQ</p>
+                  <GlassCard className="public-panel border-border-brand-12 bg-surface-92 p-6">
+                    <p className="text-xs uppercase tracking-label text-brand-700">FAQ</p>
                     <div className="mt-4 grid gap-3">
                       {faqs.map((faq) => (
                         <FaqItem key={faq.question} question={faq.question} answer={faq.answer} />
@@ -705,10 +705,10 @@ export function LandingPage() {
           </section>
         </main>
 
-        <footer className="relative z-10 border-t border-border-subtle bg-[rgba(250,248,244,0.82)]">
+        <footer className="relative z-10 border-t border-border-subtle bg-canvas-soft/82">
           <div className="mx-auto flex max-w-container-xl flex-col gap-6 px-5 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
             <div>
-              <p className="text-sm font-semibold tracking-[0.08em] text-brand-900">LIDER 요양레이다</p>
+              <p className="text-sm font-semibold tracking-brand text-brand-900">LIDER 요양레이다</p>
               <p className="mt-1 text-sm text-text-muted">
                 기존 요양 프로그램은 그대로 두고, 운영 누락 방지와 운영 진단부터 시작하는 보완형 서비스
               </p>
@@ -759,7 +759,7 @@ function SectionIntro({
     <div className="max-w-container-lg">
       <p className="public-kicker">{eyebrow}</p>
       <h2
-        className="public-heading mt-4 text-3xl font-semibold leading-[1.08] tracking-[-0.035em] text-brand-900 sm:text-6xl"
+        className="public-heading mt-4 text-3xl font-semibold leading-heading tracking-tight-heading text-brand-900 sm:text-6xl"
       >
         {title}
       </h2>
@@ -777,7 +777,7 @@ function WhyNowMetric({
 }) {
   return (
     <div className="public-metric-card">
-      <p className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-soft)]">{title}</p>
+      <p className="text-xs uppercase tracking-card text-[color:var(--text-soft)]">{title}</p>
       <p className="mt-2 text-sm font-semibold text-brand-900">{value}</p>
     </div>
   );
@@ -785,22 +785,22 @@ function WhyNowMetric({
 
 function MobilePreviewShell() {
   return (
-    <div className="mx-auto w-full max-w-[228px] rounded-2xl border border-[rgba(39,53,45,0.12)] bg-[linear-gradient(180deg,#27352d,#314238)] p-3 shadow-[0_18px_42px_rgba(39,53,45,0.18)] sm:max-w-[244px] lg:max-w-[252px]">
-      <div className="rounded-2xl bg-[linear-gradient(180deg,rgba(248,246,241,0.98),rgba(255,253,250,0.96))] p-3 sm:p-4">
-        <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-[rgba(39,53,45,0.12)] sm:mb-4" />
+    <div className="mx-auto w-full max-w-[228px] rounded-2xl border border-dark-surface-12 bg-gradient-mobile-shell p-3 shadow-[0_18px_42px_rgba(39,53,45,0.18)] sm:max-w-[244px] lg:max-w-[252px]">
+      <div className="rounded-2xl bg-gradient-mobile-bg p-3 sm:p-4">
+        <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-dark-surface-12 sm:mb-4" />
 
-        <div className="relative h-[286px] overflow-hidden rounded-2xl border border-[rgba(39,53,45,0.1)] bg-white shadow-[0_16px_32px_rgba(39,53,45,0.1)] sm:h-[316px] lg:h-[342px]">
+        <div className="relative h-[286px] overflow-hidden rounded-2xl border border-dark-surface-10 bg-white shadow-[0_16px_32px_rgba(39,53,45,0.1)] sm:h-[316px] lg:h-[342px]">
           <img
             src={deployedMobilePreview}
             alt="실제 배포 모바일 화면 예시"
             className="block h-full w-full object-cover object-top"
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.94))]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-white-fade" />
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-3 sm:px-4 sm:pt-4">
-            <span className="rounded-full bg-[rgba(255,255,255,0.9)] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-brand-700 sm:px-3 sm:text-[10px] sm:tracking-[0.22em]">
+            <span className="rounded-full bg-surface-90 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-mobile text-brand-700 sm:px-3 sm:text-[10px] sm:tracking-badge">
               Real Mobile UI
             </span>
-            <span className="rounded-full bg-[rgba(39,53,45,0.92)] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-white sm:px-3 sm:text-[10px] sm:tracking-[0.18em]">
+            <span className="rounded-full bg-dark-surface-92 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-min text-white sm:px-3 sm:text-[10px] sm:tracking-tiny">
               Live App Shot
             </span>
           </div>
@@ -824,7 +824,7 @@ function ReportStat({
       className={
         tone === 'dark'
           ? 'flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/6 px-4 py-3'
-          : 'flex items-center justify-between gap-4 rounded-xl border border-[rgba(71,96,83,0.12)] bg-surface-78 px-4 py-3'
+          : 'flex items-center justify-between gap-4 rounded-xl border border-border-brand-12 bg-surface-78 px-4 py-3'
       }
     >
       <p className={tone === 'dark' ? 'text-sm text-white/62' : 'text-sm text-text-muted'}>{label}</p>
@@ -882,5 +882,8 @@ function DiagnosisField({
       <p className="public-field-label">{label}</p>
       {children}
     </label>
+  );
+}
+l>
   );
 }

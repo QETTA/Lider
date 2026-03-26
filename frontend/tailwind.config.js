@@ -66,6 +66,8 @@ export default {
           // Warning surface alphas
           'warning-10': 'var(--warning-surface-10)',
           // Dark surface alphas
+          'dark-10': 'var(--dark-surface-10)',
+          'dark-12': 'var(--dark-surface-12)',
           'dark-82': 'var(--dark-surface-82)',
           'dark-92': 'var(--dark-surface-92)',
         },
@@ -158,8 +160,36 @@ export default {
         'normal': 'var(--duration-normal)',
         'slow': 'var(--duration-slow)',
       },
+      letterSpacing: {
+        'kicker': 'var(--tracking-kicker)',
+        'label': 'var(--tracking-label)',
+        'step': 'var(--tracking-step)',
+        'card': 'var(--tracking-card)',
+        'badge': 'var(--tracking-badge)',
+        'mobile': 'var(--tracking-mobile)',
+        'tiny': 'var(--tracking-tiny)',
+        'min': 'var(--tracking-min)',
+        'tight-hero': '-0.055em',
+        'tight-section': '-0.045em',
+        'tight-heading': '-0.035em',
+        'brand': '0.08em',
+      },
+      lineHeight: {
+        'hero': 'var(--leading-hero)',
+        'section': 'var(--leading-section)',
+        'heading': 'var(--leading-heading)',
+      },
       backdropBlur: {
         xs: '2px',
+      },
+      gridTemplateColumns: {
+        'hero': 'var(--grid-hero)',
+        'hero-sidebar': 'var(--grid-hero-sidebar)',
+        'problem': 'var(--grid-problem)',
+        'why-now': 'var(--grid-why-now)',
+        'report': 'var(--grid-report)',
+        'steps': 'var(--grid-steps)',
+        'form-submit': '1fr auto',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
