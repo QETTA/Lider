@@ -736,20 +736,205 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
     }
   },
 
-  // 통합 검색
+  // 통합 검색 (Vector Search + Hybrid Search)
   async intelligentSearch(
     query: string,
     context?: { recipientId?: string; workerId?: string; centerId?: string },
     filters?: { type?: string; dateRange?: { from?: string; to?: string } }
   ) {
-    // TODO: Vector DB 연동 시 구현
-    // 현재는 모의 응답
+    const startTime = Date.now();
+    const hasVectorProvider = !!process.env.VECTOR_DB_PROVIDER;
+
+    // Phase 1: Vector Search (Semantic) - if configured
+    if (hasVectorProvider) {
+      try {
+        const vectorResults = await this.performVectorSearch(query, context, filters);
+        return {
+          success: true,
+          query,
+          strategy: 'vector',
+          results: vectorResults.hits,
+          total: vectorResults.total,
+          summary: vectorResults.summary,
+          executionTimeMs: Date.now() - startTime,
+        };
+      } catch (err) {
+        logger.warn({ err }, 'Vector search failed, falling back to keyword search');
+      }
+    }
+
+    // Phase 2: Hybrid Search (Keyword + Partial Vector) - current implementation
+    const keywordResults = await this.performKeywordSearch(query, context, filters);
+
     return {
+      success: true,
       query,
-      results: [],
-      summary: '검색 기능은 Vector DB 연동 후 활성화됩니다',
-      suggestions: ['정확한 검색을 위해 더 구체적인 키워드를 입력하세요'],
+      strategy: 'keyword',
+      results: keywordResults,
+      total: keywordResults.length,
+      summary: keywordResults.length > 0
+        ? `${keywordResults.length}개의 관련 결과를 찾았습니다`
+        : '검색 결과가 없습니다. 다른 키워드를 시도해보세요.',
+      executionTimeMs: Date.now() - startTime,
+      meta: {
+        vectorSearchAvailable: hasVectorProvider,
+        filters: filters || null,
+        context: context || null,
+      },
     };
+  },
+
+  // Vector Search placeholder (for Pinecone/Weaviate integration)
+  private async performVectorSearch(
+    query: string,
+    context?: { recipientId?: string; workerId?: string; centerId?: string },
+    filters?: { type?: string; dateRange?: { from?: string; to?: string } }
+  ): Promise<{ hits: any[]; total: number; summary: string }> {
+    const provider = process.env.VECTOR_DB_PROVIDER; // 'pinecone' | 'weaviate' | 'pgvector'
+    const embeddingModel = process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
+
+    // Step 1: Generate query embedding
+    const queryEmbedding = await this.generateEmbedding(query, embeddingModel);
+
+    // Step 2: Vector similarity search
+    let hits: any[] = [];
+    switch (provider) {
+      case 'pinecone':
+        hits = await this.queryPinecone(queryEmbedding, context, filters);
+        break;
+      case 'weaviate':
+        hits = await this.queryWeaviate(queryEmbedding, context, filters);
+        break;
+      case 'pgvector':
+        hits = await this.queryPgVector(queryEmbedding, context, filters);
+        break;
+      default:
+        throw new Error(`Unsupported vector provider: ${provider}`);
+    }
+
+    // Step 3: Rerank with cross-encoder (optional)
+    const rerankedHits = process.env.ENABLE_RERANK === 'true'
+      ? await this.rerankResults(query, hits)
+      : hits;
+
+    // Step 4: Generate LLM summary
+    const summary = await this.generateSearchSummary(query, rerankedHits);
+
+    return {
+      hits: rerankedHits.slice(0, 20),
+      total: rerankedHits.length,
+      summary,
+    };
+  },
+
+  // Keyword-based search (current production fallback)
+  private async performKeywordSearch(
+    query: string,
+    context?: { recipientId?: string; workerId?: string; centerId?: string },
+    filters?: { type?: string; dateRange?: { from?: string; to?: string } }
+  ): Promise<any[]> {
+    const prisma = new (await import('@prisma/client')).PrismaClient();
+    const searchTerms = query.split(/\s+/).filter(t => t.length >= 2);
+    const orConditions = searchTerms.map(term => ({
+      OR: [
+        { name: { contains: term, mode: 'insensitive' as const } },
+        { address: { contains: term, mode: 'insensitive' as const } },
+        { phone: { contains: term } },
+        { longTermCareId: { contains: term } },
+      ],
+    }));
+
+    // Search Recipients
+    const recipients = await prisma.recipient.findMany({
+      where: {
+        AND: [
+          ...orConditions,
+          ...(context?.centerId ? [{ centerId: context.centerId }] : []),
+        ],
+      },
+      take: 10,
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        phone: true,
+        careGrade: true,
+        _count: {
+          select: { records: true, documents: true },
+        },
+      },
+    });
+
+    // Search CareRecords (if recipient context provided)
+    let records: any[] = [];
+    if (context?.recipientId) {
+      records = await prisma.careRecord.findMany({
+        where: {
+          recipientId: context.recipientId,
+          OR: [
+            { condition: { contains: query, mode: 'insensitive' } },
+            { specialNotes: { contains: query, mode: 'insensitive' } },
+          ],
+          ...(filters?.dateRange?.from && filters?.dateRange?.to
+            ? { recordDate: { gte: new Date(filters.dateRange.from), lte: new Date(filters.dateRange.to) } }
+            : {}),
+        },
+        take: 10,
+        orderBy: { recordDate: 'desc' },
+        include: {
+          recipient: { select: { name: true } },
+        },
+      });
+    }
+
+    await prisma.$disconnect();
+
+    return [
+      ...recipients.map(r => ({
+        type: 'recipient',
+        title: r.name,
+        subtitle: `${r.address || '주소 미등록'} | ${r.careGrade || '등급 미정'}`,
+        id: r.id,
+        meta: { recordCount: r._count.records, documentCount: r._count.documents },
+      })),
+      ...records.map(r => ({
+        type: 'care_record',
+        title: `${r.recipient.name} 케어 기록`,
+        subtitle: `${r.recordDate.toISOString().slice(0, 10)} | ${r.condition?.slice(0, 30) || ''}`,
+        id: r.id,
+        meta: { date: r.recordDate, hasPhotos: r.photos.length > 0 },
+      })),
+    ];
+  },
+
+  // Embedding generation (placeholder for OpenAI/Local embedding)
+  private async generateEmbedding(text: string, model: string): Promise<number[]> {
+    // TODO: Implement actual embedding generation
+    // Options: 1) OpenAI API, 2) Local Ollama, 3) HuggingFace Inference
+    throw new Error('Embedding generation not yet implemented');
+  },
+
+  // Vector DB query implementations (placeholders)
+  private async queryPinecone(embedding: number[], context?: any, filters?: any): Promise<any[]> {
+    throw new Error('Pinecone integration not yet implemented');
+  },
+  private async queryWeaviate(embedding: number[], context?: any, filters?: any): Promise<any[]> {
+    throw new Error('Weaviate integration not yet implemented');
+  },
+  private async queryPgVector(embedding: number[], context?: any, filters?: any): Promise<any[]> {
+    throw new Error('pgvector integration not yet implemented');
+  },
+
+  // Reranking (placeholder)
+  private async rerankResults(query: string, hits: any[]): Promise<any[]> {
+    // TODO: Implement cross-encoder reranking (Cohere/CrossEncoder)
+    return hits;
+  },
+
+  // Search summary generation (placeholder)
+  private async generateSearchSummary(query: string, hits: any[]): Promise<string> {
+    if (hits.length === 0) return '검색 결과가 없습니다.';
+    return `${hits.length}개의 결과를 찾았습니다. 주요 내용: ${hits.slice(0, 3).map(h => h.title).join(', ')}`;
   },
 
   // AI 상태 확인

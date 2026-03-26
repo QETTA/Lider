@@ -137,7 +137,6 @@ export async function extractRoutes(fastify: FastifyInstance) {
     logger.info({ documentId: body.documentId }, 'Starting document analysis');
 
     try {
-      // TODO: 문서 조회 및 AI 추출
       const result = await extractService.analyzeDocument(body.documentId, body.extractFields);
 
       return reply.send({

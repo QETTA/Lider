@@ -26,8 +26,9 @@ model User {
   records     CareRecord[]
   consultations Consultation[]
   documents   Document[]
+  schedules   VisitSchedule[]
   onboardingProfile UserOnboardingProfile?
-  
+
   @@map("users")
 }
 
@@ -111,7 +112,8 @@ model Recipient {
   records         CareRecord[]
   consultations   Consultation[]
   evaluations     Evaluation[]
-  
+  schedules       VisitSchedule[]
+
   @@map("recipients")
 }
 
@@ -382,4 +384,48 @@ model UserOnboardingProfile {
   updatedAt            DateTime @updatedAt
 
   @@map("user_onboarding_profiles")
+}
+
+// 방문 일정 (Mobile Schedule Management)
+model VisitSchedule {
+  id              String   @id @default(uuid())
+
+  // 관계
+  workerId        String
+  worker          User     @relation(fields: [workerId], references: [id])
+  recipientId     String
+  recipient       Recipient @relation(fields: [recipientId], references: [id])
+
+  // 일정 정보
+  scheduledDate   DateTime // 방문 예정일
+  scheduledTime   DateTime? // 방문 예정 시간 (정확한 시간대)
+  estimatedDurationMinutes Int? // 예상 소요시간 (분)
+
+  // 상태
+  status          VisitStatus @default(SCHEDULED)
+  visitType       RecordType @default(VISIT)
+
+  // 상세 정보
+  notes           String?  @db.Text // 방문 전 메모/특이사항
+  locationNote    String?  // 위치 특이사항
+
+  // 완료 연결
+  completedAt     DateTime?
+  relatedCareRecordId String? // 완료 후 생성된 CareRecord ID
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([workerId, scheduledDate])
+  @@index([recipientId, scheduledDate])
+  @@index([status, scheduledDate])
+  @@map("visit_schedules")
+}
+
+enum VisitStatus {
+  SCHEDULED   // 예정됨
+  IN_PROGRESS // 진행중
+  COMPLETED   // 완료
+  CANCELLED   // 취소됨
+  SKIPPED     // skip (부재 등)
 }

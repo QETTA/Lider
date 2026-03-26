@@ -37,25 +37,35 @@ export async function mobileRoutes(fastify: FastifyInstance) {
     schema: {
       tags: ['Mobile'],
       summary: '오늘 방문 일정',
-      description: '오늘 방문 예정인 수급자 목록 (Mobile Entry용)',
+      description: '오늘 방문 예정인 수급자 목록 (Mobile Entry용). VisitSchedule 기반으로 예정된 방문을 조회합니다.',
     },
     preHandler: requireAuth,
   }, async (request) => {
     const { workerId } = request.query as any;
     const sessionUserId = getSessionUserId(request);
+    const targetWorkerId = workerId || sessionUserId;
 
-    // TODO: 일정 관리 테이블 연동 시 구현
-    // 현재는 최근 방문한 수급자 기준으로 반환
+    if (!targetWorkerId) {
+      return {
+        success: true,
+        data: [],
+        meta: { message: '세션 정보가 없습니다' },
+      };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
-    const records = await prisma.careRecord.findMany({
+    // VisitSchedule 기반으로 오늘 예정된 방문 조회
+    const schedules = await prisma.visitSchedule.findMany({
       where: {
-        workerId: workerId || sessionUserId || undefined,
-        recordDate: {
+        workerId: targetWorkerId,
+        scheduledDate: {
           gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+          lt: tomorrow,
         },
+        status: { in: ['SCHEDULED', 'IN_PROGRESS'] },
       },
       include: {
         recipient: {
@@ -65,15 +75,75 @@ export async function mobileRoutes(fastify: FastifyInstance) {
             address: true,
             careGrade: true,
             phone: true,
+            longTermCareId: true,
           },
         },
       },
-      orderBy: { visitTime: 'asc' },
+      orderBy: [{ scheduledTime: 'asc' }, { createdAt: 'asc' }],
     });
+
+    // VisitSchedule이 없는 경우 기존 CareRecord에서 fallback 조회
+    if (schedules.length === 0) {
+      const fallbackRecords = await prisma.careRecord.findMany({
+        where: {
+          workerId: targetWorkerId,
+          recordDate: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+        include: {
+          recipient: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+              careGrade: true,
+              phone: true,
+              longTermCareId: true,
+            },
+          },
+        },
+        orderBy: { visitTime: 'asc' },
+        take: 10,
+      });
+
+      return {
+        success: true,
+        data: fallbackRecords.map(r => ({
+          type: 'fallback_record',
+          recordId: r.id,
+          recipient: r.recipient,
+          status: r.leaveTime ? 'COMPLETED' : 'IN_PROGRESS',
+          scheduledTime: r.visitTime,
+          estimatedDurationMinutes: r.leaveTime && r.visitTime
+            ? Math.round((new Date(r.leaveTime).getTime() - new Date(r.visitTime).getTime()) / 60000)
+            : null,
+          notes: r.specialNotes,
+        })),
+        meta: {
+          source: 'care_record_fallback',
+          message: 'VisitSchedule이 없어 기존 기록에서 조회했습니다',
+        },
+      };
+    }
 
     return {
       success: true,
-      data: records,
+      data: schedules.map(s => ({
+        scheduleId: s.id,
+        recipient: s.recipient,
+        status: s.status,
+        visitType: s.visitType,
+        scheduledTime: s.scheduledTime,
+        estimatedDurationMinutes: s.estimatedDurationMinutes,
+        notes: s.notes,
+        locationNote: s.locationNote,
+      })),
+      meta: {
+        source: 'visit_schedule',
+        count: schedules.length,
+      },
     };
   });
 
