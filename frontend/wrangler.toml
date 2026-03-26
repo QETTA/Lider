@@ -1,0 +1,23 @@
+name = "lider-frontend"
+main = "./worker/index.ts"
+compatibility_date = "2026-03-25"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ANTHROPIC_MODEL = "claude-sonnet-4-6"
+# Primary runtime contract:
+# set CORE_API_BASE_URL in the Worker environment to enable same-origin auth,
+# onboarding, health, and public-data proxying against the backend.
+#
+# Optional only:
+# AI_PROXY_BASE_URL / AI_PROXY_SHARED_SECRET can be configured for public AI
+# fallback, but they are not part of the core runtime path.
+
+[placement]
+region = "aws:ap-northeast-2"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/v1/*"]

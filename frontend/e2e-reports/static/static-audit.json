@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-03-25T03:05:08.665Z",
+  "summary": {
+    "filesChecked": 17,
+    "componentsFound": 16,
+    "issuesFound": 4,
+    "designSystemScore": 75
+  },
+  "details": {
+    "emotionModes": [
+      "focus"
+    ],
+    "cssClasses": [
+      "className=\"h-16 glass",
+      "className=\"absolute inset-0 glass",
+      "className=\"text-sm text-gray-500 glass"
+    ],
+    "issues": [
+      {
+        "type": "design-system",
+        "file": "BentoGrid.tsx",
+        "message": "Glass class used but backdrop-filter may be missing"
+      },
+      {
+        "type": "design-system",
+        "file": "GlassCard.tsx",
+        "message": "Glass class used but backdrop-filter may be missing"
+      },
+      {
+        "type": "warning",
+        "file": "index.ts",
+        "message": "Component may lack styling (no className or style found)"
+      },
+      {
+        "type": "design-system",
+        "file": "Sidebar2026.tsx",
+        "message": "Glass class used but backdrop-filter may be missing"
+      }
+    ]
+  }
+}

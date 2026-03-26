@@ -1,0 +1,163 @@
+---
+# Prometheus ServiceMonitor for Backend
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: yoyang-radar-backend-metrics
+  namespace: yoyang-radar
+  labels:
+    app.kubernetes.io/name: yoyang-radar
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: yoyang-radar-backend
+  endpoints:
+    - port: http
+      path: /v1/health/metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      honorLabels: true
+---
+# PrometheusRule for Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: yoyang-radar-alerts
+  namespace: yoyang-radar
+  labels:
+    app.kubernetes.io/name: yoyang-radar
+    app.kubernetes.io/component: alerting
+spec:
+  groups:
+    - name: yoyang-radar.rules
+      rules:
+        # High Error Rate
+        - alert: YoyangRadarHighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5..",namespace="yoyang-radar"}[5m]))
+              /
+              sum(rate(http_requests_total{namespace="yoyang-radar"}[5m]))
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "요양레이다 높은 에러율 감지"
+            description: "5분간 에러율이 5%를 초과했습니다: {{ $value | humanizePercentage }}"
+
+        # High Latency
+        - alert: YoyangRadarHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{namespace="yoyang-radar"}[5m])) by (le)
+            ) > 2
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "요양레이다 높은 응답 지연"
+            description: "P95 응답 시간이 2초를 초과했습니다: {{ $value }}s"
+
+        # API Down
+        - alert: YoyangRadarAPIDown
+          expr: up{job="yoyang-radar-backend-metrics"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "요양레이다 API 다운"
+            description: "API 서버 {{ $labels.instance }}가 응답하지 않습니다"
+
+        # Database Connection Issues
+        - alert: YoyangRadarDatabaseConnectionFailed
+          expr: |
+            yoyangradar_db_connection_active{namespace="yoyang-radar"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "데이터베이스 연결 실패"
+            description: "PostgreSQL 연결이 끊어졌습니다"
+
+        # External API Failures (Public Data Portal)
+        - alert: YoyangRadarExternalAPIFailure
+          expr: |
+            (
+              sum(rate(yoyangradar_external_api_requests_total{status=~"5..|4..",namespace="yoyang-radar"}[10m]))
+              /
+              sum(rate(yoyangradar_external_api_requests_total{namespace="yoyang-radar"}[10m]))
+            ) > 0.3
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "외부 API 연동 실패율 높음"
+            description: "공공데이터포털 API 실패율이 30%를 초과했습니다"
+
+        # AI Service Latency
+        - alert: YoyangRadarAILatencyHigh
+          expr: |
+            histogram_quantile(0.90,
+              sum(rate(yoyangradar_ai_request_duration_seconds_bucket{namespace="yoyang-radar"}[5m])) by (le)
+            ) > 30
+          for: 5m
+          labels:
+            severity: warning
+            team: ai
+          annotations:
+            summary: "AI 응답 지연 높음"
+            description: "Kimi API P90 응답 시간이 30초를 초과했습니다"
+
+        # Pod Crash Loop
+        - alert: YoyangRadarPodCrashLoop
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="yoyang-radar"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "Pod Crash Loop 감지"
+            description: "{{ $labels.pod }} Pod가 반복적으로 재시작되고 있습니다"
+
+        # Low Disk Space (PostgreSQL)
+        - alert: YoyangRadarPostgresDiskLow
+          expr: |
+            (
+              kubelet_volume_stats_available_bytes{namespace="yoyang-radar",persistentvolumeclaim="postgres-pvc"}
+              /
+              kubelet_volume_stats_capacity_bytes{namespace="yoyang-radar",persistentvolumeclaim="postgres-pvc"}
+            ) < 0.1
+          for: 5m
+          labels:
+            severity: warning
+            team: platform
+          annotations:
+            summary: "PostgreSQL 디스크 용량 부족"
+            description: "남은 디스크 공간이 10% 미만입니다"
+---
+# Custom Metrics Exporter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: yoyang-radar-metrics
+  namespace: yoyang-radar
+  labels:
+    app.kubernetes.io/name: yoyang-radar-metrics
+    app.kubernetes.io/component: metrics
+spec:
+  type: ClusterIP
+  selector:
+    app: yoyang-radar-backend
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: 3001
+      protocol: TCP

@@ -1,0 +1,22 @@
+---
+# Production Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yoyang-radar
+  labels:
+    name: yoyang-radar
+    environment: production
+    app.kubernetes.io/name: yoyang-radar
+    app.kubernetes.io/component: namespace
+---
+# Development Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yoyang-radar-dev
+  labels:
+    name: yoyang-radar-dev
+    environment: development
+    app.kubernetes.io/name: yoyang-radar
+    app.kubernetes.io/component: namespace

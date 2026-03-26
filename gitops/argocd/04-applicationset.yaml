@@ -1,0 +1,127 @@
+# ArgoCD ApplicationSet for Multi-Environment Deployment
+# Git 브랜치/태그 기반 자동 환경 생성
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: lider-environments
+  namespace: argocd
+spec:
+  generators:
+    # Git 브랜치 기반 환경 생성
+    - git:
+        repoURL: https://github.com/QETTA/yoyang-radar.git
+        revision: HEAD
+        directories:
+          - path: k8s/overlays/*
+    
+    # Pull Request 환경 (리뷰용 임시 환경)
+    - pullRequest:
+        github:
+          owner: QETTA
+          repo: yoyang-radar
+          tokenRef:
+            secretName: github-token
+            key: token
+        requeueAfterSeconds: 300
+  
+  template:
+    metadata:
+      name: 'lider-{{path.basename}}'
+      namespace: argocd
+      labels:
+        environment: '{{path.basename}}'
+        project: lider-platform
+        generated-by: applicationset
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: lider-platform
+      source:
+        repoURL: https://github.com/QETTA/yoyang-radar.git
+        targetRevision: '{{head_sha}}'  # PR의 head commit
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'lider-{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+  
+  # 전략 설정 (Blue/Green 배포)
+  strategy:
+    type: RollingSync
+    rollingSync:
+      steps:
+        - match:
+            - expressions:
+                - key: environment
+                  operator: In
+                  values: [staging]
+          maxUpdate: 100%
+        - match:
+            - expressions:
+                - key: environment
+                  operator: In
+                  values: [production]
+          maxUpdate: 50%
+
+---
+# PR 환경 전용 ApplicationSet (리뷰 앱)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: lider-pr-environments
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: QETTA
+          repo: yoyang-radar
+          tokenRef:
+            secretName: github-token
+            key: token
+        requeueAfterSeconds: 60
+  
+  template:
+    metadata:
+      name: 'lider-pr-{{number}}'
+      namespace: argocd
+      labels:
+        environment: pr-review
+        pr-number: '{{number}}'
+        generated-by: pr
+      annotations:
+        github.com/pr-url: '{{url}}'
+        github.com/branch: '{{branch}}'
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: lider-platform
+      source:
+        repoURL: https://github.com/QETTA/yoyang-radar.git
+        targetRevision: '{{head_sha}}'
+        path: k8s/overlays/staging
+        kustomize:
+          commonLabels:
+            pr-number: '{{number}}'
+            pr-author: '{{author}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'lider-pr-{{number}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        # PR 환경은 자동 삭제 (TTL)
+        retry:
+          limit: 3
+  
+  # PR 머지/클로즈 시 자동 삭제
+  syncPolicy:
+    preserveResourcesOnDeletion: false

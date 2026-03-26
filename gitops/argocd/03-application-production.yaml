@@ -1,0 +1,71 @@
+# ArgoCD Application for LIDER Production Environment
+# Production 환경 수동 승인 + Canary 배포 설정
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lider-production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    environment: production
+    project: lider-platform
+    version: v1.0
+    criticality: high
+  annotations:
+    # 알림 설정
+    notifications.argoproj.io/subscribe.on-degraded.slack: alerts
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: alerts
+    # 승인 필요 표시
+    argocd.argoproj.io/needs-approval: "true"
+spec:
+  project: lider-platform
+  
+  source:
+    repoURL: https://github.com/QETTA/yoyang-radar.git
+    targetRevision: main  # production 브랜치
+    path: k8s/overlays/production
+    
+    kustomize:
+      namePrefix: prod-
+      commonLabels:
+        environment: production
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lider-production
+  
+  syncPolicy:
+    # Production: 자동 동기화 비활성화 (수동 승인 필요)
+    automated:
+      prune: false       # 수동으로 삭제 확인
+      selfHeal: false    # 수동으로 드리프트 확인
+      allowEmpty: false
+    
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - Validate=true
+      - ServerSideApply=true
+    
+    # Production은 재시도 안함 (문제 확인 필요)
+    retry:
+      limit: 0
+  
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: argoproj.io
+      kind: Rollout
+      jsonPointers:
+        - /spec/replicas
+        - /spec/template/spec/containers/0/image
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data
+  
+  revisionHistoryLimit: 20  # 더 많은 히스토리 보관

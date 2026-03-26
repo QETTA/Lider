@@ -1,0 +1,73 @@
+# ArgoCD Application for LIDER Staging Environment
+# Staging 환경 자동 동기화 설정
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lider-staging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    environment: staging
+    project: lider-platform
+    version: v1.0
+spec:
+  project: lider-platform
+  
+  source:
+    repoURL: https://github.com/QETTA/yoyang-radar.git
+    targetRevision: develop  # staging 브랜치
+    path: k8s/overlays/staging
+    
+    # Helm 값 오버라이드 (선택사항)
+    helm:
+      valueFiles:
+        - values-staging.yaml
+    
+    # Kustomize 설정
+    kustomize:
+      namePrefix: staging-
+      commonLabels:
+        environment: staging
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lider-staging
+  
+  syncPolicy:
+    # 자동 동기화 활성화
+    automated:
+      prune: true        # 삭제된 리소스 자동 정리
+      selfHeal: true     # 드리프트 자동 수정
+      allowEmpty: false  # 빈 리소스 허용 안함
+    
+    # 동기화 옵션
+    syncOptions:
+      - CreateNamespace=true                    # 네임스페이스 자동 생성
+      - PrunePropagationPolicy=foreground      # 포그라운드 삭제
+      - PruneLast=true                         # 마지막에 prune
+      - ApplyOutOfSyncOnly=true               # 변경된 것만 적용
+      - Validate=true                          # 유효성 검증
+      - ServerSideApply=true                   # 서버사이드 적용
+    
+    # 재시도 정책
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # 자동 동기화 예외 항목
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # HPA로 관리되는 replica 수 무시
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        - /data  # Secret 데이터 변경 무시
+  
+  # 리비전 히스토리
+  revisionHistoryLimit: 10

@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="18" fill="#27352D"/>
+  <rect x="10" y="10" width="44" height="44" rx="14" fill="url(#panel)"/>
+  <path d="M21 39C24.2 33.6 29 28.8 39 25" stroke="#DFF4F4" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="22" cy="41" r="4" fill="#FFF4DF"/>
+  <circle cx="40" cy="24" r="5" fill="#1C9A9D"/>
+  <path d="M32 18V29" stroke="#FFFDF9" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M26.5 23.5H37.5" stroke="#FFFDF9" stroke-width="3.2" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="panel" x1="12" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#34463C"/>
+      <stop offset="1" stop-color="#476053"/>
+    </linearGradient>
+  </defs>
+</svg>

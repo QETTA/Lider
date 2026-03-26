@@ -1,0 +1,71 @@
+---
+# Application ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yoyang-radar-config
+  namespace: yoyang-radar
+  labels:
+    app.kubernetes.io/name: yoyang-radar
+    app.kubernetes.io/component: config
+data:
+  # Application Settings
+  NODE_ENV: "production"
+  PORT: "3001"
+  HOST: "0.0.0.0"
+  
+  # Frontend URL
+  FRONTEND_URL: "https://yoyang-radar.kr"
+  
+  # Database (PostgreSQL)
+  DATABASE_URL: "postgresql://yoyang:${DB_PASSWORD}@postgres-service:5432/yoyangradar?schema=public"
+  
+  # Logging
+  LOG_LEVEL: "info"
+  
+  # Public Data Portal
+  PUBLIC_DATA_API_ENDPOINT: "https://apis.data.go.kr/B490001"
+  
+  # EMR Settings
+  EMR_STANDARD: "FHIR"
+  EMR_VERSION: "R4"
+  
+  # AI Settings
+  AI_TIMEOUT: "60000"
+  AI_MAX_TOKENS: "8192"
+  
+  # Cache Settings
+  CACHE_TTL: "300"
+  
+  # Feature Flags
+  FEATURE_EXTRACT_MODULE: "true"
+  FEATURE_MOBILE_ENTRY: "true"
+  FEATURE_EMR_INTEGRATION: "true"
+  FEATURE_PUBLIC_DATA: "true"
+---
+# Development ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yoyang-radar-config
+  namespace: yoyang-radar-dev
+  labels:
+    app.kubernetes.io/name: yoyang-radar
+    app.kubernetes.io/component: config
+data:
+  NODE_ENV: "development"
+  PORT: "3001"
+  HOST: "0.0.0.0"
+  FRONTEND_URL: "http://localhost:5173"
+  DATABASE_URL: "postgresql://yoyang:${DB_PASSWORD}@postgres-service:5432/yoyangradar?schema=public"
+  LOG_LEVEL: "debug"
+  PUBLIC_DATA_API_ENDPOINT: "https://apis.data.go.kr/B490001"
+  EMR_STANDARD: "FHIR"
+  EMR_VERSION: "R4"
+  AI_TIMEOUT: "120000"
+  AI_MAX_TOKENS: "8192"
+  CACHE_TTL: "60"
+  FEATURE_EXTRACT_MODULE: "true"
+  FEATURE_MOBILE_ENTRY: "true"
+  FEATURE_EMR_INTEGRATION: "true"
+  FEATURE_PUBLIC_DATA: "true"

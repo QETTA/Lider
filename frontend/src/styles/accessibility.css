@@ -1,0 +1,144 @@
+/**
+ * LIDER 2.0 Accessibility Enhancements
+ * WCAG 2.1 AA Compliance
+ */
+
+/* Focus Visible Styles */
+:focus-visible {
+  outline: 3px solid #137d80;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #0f6b6f;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-bounce,
+  .animate-float {
+    animation: none !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .surface-paper,
+  .surface-paper-strong,
+  .surface-tint,
+  .surface-frost,
+  .glass,
+  .glass-card,
+  .glass-lg {
+    background: white !important;
+    border: 2px solid currentColor !important;
+  }
+
+  .glass-dark {
+    background: black !important;
+    border: 2px solid white !important;
+    color: white !important;
+  }
+
+  .text-gradient {
+    -webkit-text-fill-color: currentColor !important;
+    background: none !important;
+  }
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus Within */
+.focus-within-ring:focus-within {
+  outline: 3px solid #137d80;
+  outline-offset: 2px;
+}
+
+/* Button Focus States */
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #137d80;
+  outline-offset: 2px;
+}
+
+/* Custom Checkbox/Radio Focus */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 3px solid #137d80;
+  outline-offset: 2px;
+}
+
+/* Select Focus */
+select:focus-visible {
+  outline: 3px solid #137d80;
+  outline-offset: 2px;
+}
+
+/* Text Contrast Helpers */
+.text-high-contrast {
+  color: #000000;
+  background: #ffffff;
+}
+
+/* Disable Animations for Vestibular Disorders */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .status-dot::after {
+    display: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .surface-paper,
+  .surface-paper-strong,
+  .surface-tint,
+  .glass,
+  .glass-card {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}

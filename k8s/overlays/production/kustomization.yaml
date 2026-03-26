@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: yoyang-radar
+
+resources:
+  - ../../base/00-namespace.yaml
+  - ../../base/01-configmap.yaml
+  - ../../base/02-secret.yaml
+  - ../../base/03-postgres.yaml
+  - ../../base/04-backend.yaml
+  - ../../base/05-frontend.yaml
+  - ../../base/06-ingress.yaml
+  - ../../monitoring/01-prometheus.yaml
+  - ../../monitoring/02-grafana.yaml
+  - ../../monitoring/03-loki.yaml
+
+# Production-specific patches
+patchesStrategicMerge:
+  - backend-replicas.yaml
+  - postgres-storage.yaml
+
+# Image tags (updated by CI/CD)
+images:
+  - name: yoyangradar/backend
+    newTag: latest
+  - name: yoyangradar/frontend
+    newTag: latest
+
+# Common labels
+commonLabels:
+  environment: production
+  managed-by: kustomize

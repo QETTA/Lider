@@ -1,0 +1,171 @@
+# Argo Rollouts: Backend Canary Deployment
+# 자동화된 Canary 배포 + 분석 + 롤백
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: lider-backend
+  namespace: lider-production
+  labels:
+    app: lider-backend
+    component: api
+    version: v1
+spec:
+  replicas: 4
+  strategy:
+    canary:
+      # Canary 단계 설정
+      steps:
+        # 1단계: 10% 트래픽, 5분 대기
+        - setWeight: 10
+        - pause: { duration: 5m }
+        
+        # 2단계: 25% 트래픽, 분석 실행
+        - setWeight: 25
+        - analysis:
+            templates:
+              - templateName: backend-smoke-tests
+            args:
+              - name: service-name
+                value: lider-backend
+        - pause: { duration: 5m }
+        
+        # 3단계: 50% 트래픽
+        - setWeight: 50
+        - pause: { duration: 10m }
+        
+        # 4단계: 75% 트래픽, 심층 분석
+        - setWeight: 75
+        - analysis:
+            templates:
+              - templateName: backend-load-test
+              - templateName: backend-error-rate
+            args:
+              - name: service-name
+                value: lider-backend
+        - pause: { duration: 5m }
+        
+        # 5단계: 100% 트래픽 (자동 진행)
+        - setWeight: 100
+      
+      # 서비스 설정 (primary/canary)
+      canaryService: lider-backend-canary
+      stableService: lider-backend-stable
+      
+      # 트래픽 라우팅 (Istio/nginx-ingress)
+      trafficRouting:
+        nginx:
+          stableIngress: lider-backend-ingress
+          annotationPrefix: nginx.ingress.kubernetes.io
+          additionalIngressAnnotations:
+            canary-by-header: X-Canary
+            canary-by-header-value: "true"
+      
+      # 자동 롤백 설정
+      autoPromotionEnabled: false  # 수동 승인 필요
+      autoPromotionEnabled: true   # 자동 승인 (운영 후 활성화)
+      
+      # 최대 불안정한 replica 수
+      maxSurge: "25%"
+      maxUnavailable: 0
+      
+      # 분석 재시도
+      analysisRunTimeout: 10m
+      
+      # 스케일 다운 지연 (롤백 시 대기)
+      scaleDownDelaySeconds: 600
+      scaleDownDelayRevisionLimit: 2
+  
+  selector:
+    matchLabels:
+      app: lider-backend
+  
+  template:
+    metadata:
+      labels:
+        app: lider-backend
+        component: api
+    spec:
+      serviceAccountName: lider-backend-sa
+      containers:
+        - name: backend
+          image: lider/backend:latest
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 8080
+              name: metrics
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15"]
+      terminationGracePeriodSeconds: 60
+
+---
+# Canary Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: lider-backend-canary
+  namespace: lider-production
+  labels:
+    app: lider-backend
+    canary: "true"
+spec:
+  selector:
+    app: lider-backend
+    # Canary 레이블은 Rollout이 자동으로 추가
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+    - port: 8080
+      targetPort: 8080
+      name: metrics
+
+---
+# Stable Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: lider-backend-stable
+  namespace: lider-production
+  labels:
+    app: lider-backend
+    stable: "true"
+spec:
+  selector:
+    app: lider-backend
+    # Stable 레이블은 Rollout이 자동으로 추가
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+    - port: 8080
+      targetPort: 8080
+      name: metrics

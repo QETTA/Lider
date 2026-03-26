@@ -1,0 +1,74 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: yoyang-db
+    environment:
+      POSTGRES_USER: yoyang
+      POSTGRES_PASSWORD: yoyang123
+      POSTGRES_DB: yoyang_radar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yoyang -d yoyang_radar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - yoyang-network
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: yoyang-backend
+    environment:
+      DATABASE_URL: postgresql://yoyang:yoyang123@db:5432/yoyang_radar?schema=public
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_EXPIRES_IN: 7d
+      PORT: 3001
+      HOST: 0.0.0.0
+      NODE_ENV: production
+      PUBLIC_DATA_API_KEY: ${PUBLIC_DATA_API_KEY:-}
+      KIMI_API_KEY: ${KIMI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com/v1}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173}
+      LOG_LEVEL: info
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - yoyang-network
+    restart: unless-stopped
+
+  # Frontend (optional - static hosting)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: yoyang-frontend
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001}
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+    networks:
+      - yoyang-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  yoyang-network:
+    driver: bridge

@@ -1,0 +1,186 @@
+# Argo Rollouts Analysis Templates
+# Canary 배포 중 자동으로 실행되는 분석/테스트
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: backend-smoke-tests
+  namespace: lider-production
+spec:
+  args:
+    - name: service-name
+      value: lider-backend
+  metrics:
+    # HTTP Smoke Test
+    - name: http-availability
+      interval: 1m
+      count: 3
+      successCondition: result[0] >= 0.95
+      failureLimit: 1
+      provider:
+        web:
+          url: "http://{{args.service-name}}-canary/health/live"
+          timeoutSeconds: 10
+          jsonPath: "{$.status}"
+          aggregation: |
+            var success = 0;
+            for (var i = 0; i < results.length; i++) {
+              if (results[i] === "ok") success++;
+            }
+            return success / results.length;
+
+    # 응답 시간 체크
+    - name: response-time
+      interval: 30s
+      count: 5
+      successCondition: result <= 500  # 500ms 이하
+      failureLimit: 2
+      provider:
+        web:
+          url: "http://{{args.service-name}}-canary/health/ready"
+          timeoutSeconds: 5
+
+    # 메모리 사용량 체크
+    - name: memory-usage
+      interval: 1m
+      count: 2
+      successCondition: result < 80  # 80% 미만
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring.svc:9090
+          query: |
+            container_memory_usage_bytes{pod=~"{{args.service-name}}-.*"} 
+            / 
+            container_spec_memory_limit_bytes{pod=~"{{args.service-name}}-.*"} 
+            * 100
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: backend-error-rate
+  namespace: lider-production
+spec:
+  args:
+    - name: service-name
+      value: lider-backend
+  metrics:
+    # 오류율 체크 (Prometheus)
+    - name: error-rate
+      interval: 1m
+      count: 5
+      successCondition: result[0] < 5  # 5% 미만
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring.svc:9090
+          query: |
+            sum(rate(http_requests_total{service="{{args.service-name}}",status=~"5.."}[5m])) 
+            / 
+            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m])) 
+            * 100
+
+    # 4xx 오류율 체크
+    - name: client-error-rate
+      interval: 1m
+      count: 3
+      successCondition: result[0] < 10  # 10% 미만
+      failureLimit: 2
+      provider:
+        prometheus:
+          address: http://prometheus.monitoring.svc:9090
+          query: |
+            sum(rate(http_requests_total{service="{{args.service-name}}",status=~"4.."}[5m])) 
+            / 
+            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m])) 
+            * 100
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: backend-load-test
+  namespace: lider-production
+spec:
+  args:
+    - name: service-name
+      value: lider-backend
+  metrics:
+    # 부하 테스트 (Job 실행)
+    - name: load-test
+      provider:
+        job:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: load-test
+                    image: williamyeh/wrk:latest
+                    command:
+                      - sh
+                      - -c
+                      - |
+                        wrk -t4 -c100 -d30s \
+                          --latency \
+                          -H "X-Test-Canary: true" \
+                          http://{{args.service-name}}-canary/health/ready
+                restartPolicy: Never
+            backoffLimit: 1
+      interval: 5m
+      count: 1
+      successCondition: result == "succeeded"
+
+---
+# Blue/Green 배포용 템플릿 (Frontend)
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: frontend-e2e-tests
+  namespace: lider-production
+spec:
+  metrics:
+    # E2E 테스트 실행
+    - name: cypress-tests
+      provider:
+        job:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: e2e
+                    image: cypress/included:latest
+                    env:
+                      - name: CYPRESS_baseUrl
+                        value: "http://lider-frontend-preview"
+                    command:
+                      - cypress
+                      - run
+                      - --spec
+                      - "cypress/e2e/critical-path.cy.js"
+                restartPolicy: Never
+            backoffLimit: 2
+      interval: 10m
+      count: 1
+      successCondition: result == "succeeded"
+
+---
+# 자동 롤백 조건
+cat << 'EOF'
+# 추가 분석 템플릿: Datadog/New Relic 연동
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: datadog-metrics
+  namespace: lider-production
+spec:
+  metrics:
+    - name: apm-error-rate
+      interval: 5m
+      count: 3
+      successCondition: result < 0.01
+      provider:
+        datadog:
+          apiVersion: v2
+          query: |
+            avg:kubernetes.cpu.usage.total{service:lider-backend}
+EOF

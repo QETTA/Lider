@@ -1,0 +1,372 @@
+# GitHub Actions CI/CD Pipeline for LIDER
+# Build, Test, Security Scan, and Deploy to Kubernetes via ArgoCD
+name: 🚀 LIDER CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: qetta/lider
+
+jobs:
+  # ═════════════════════════════════════════════════════════════════
+  # Job 1: 코드 품질 및 보안 검사
+  # ═════════════════════════════════════════════════════════════════
+  code-quality:
+    name: 🔍 Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package.json'
+
+      - name: Install Dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Lint
+        run: |
+          cd backend
+          npm run lint
+
+      - name: Type Check
+        run: |
+          cd backend
+          npm run type-check
+
+      - name: Run Tests
+        run: |
+          cd backend
+          npm test -- --coverage
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/coverage/lcov.info
+          fail_ci_if_error: false
+
+      # 보안 스캔
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ═════════════════════════════════════════════════════════════════
+  # Job 2: Backend Docker 빌드 및 푸시
+  # ═════════════════════════════════════════════════════════════════
+  build-backend:
+    name: 🐳 Build Backend Image
+    runs-on: ubuntu-latest
+    needs: code-quality
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-,suffix=,format=short
+
+      - name: Build and Push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Sign Image with Cosign
+        uses: sigstore/cosign-installer@v3
+        if: github.ref == 'refs/heads/main'
+
+      - name: Sign the published Docker image
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend@${{ steps.build.outputs.digest }}
+
+  # ═════════════════════════════════════════════════════════════════
+  # Job 3: Frontend Docker 빌드 및 푸시
+  # ═════════════════════════════════════════════════════════════════
+  build-frontend:
+    name: 🎨 Build Frontend Image
+    runs-on: ubuntu-latest
+    needs: code-quality
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-,suffix=,format=short
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ═════════════════════════════════════════════════════════════════
+  # Job 4: ArgoCD 동기화 (Staging)
+  # ═════════════════════════════════════════════════════════════════
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.lider.ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup ArgoCD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name lider-staging --region ap-northeast-2
+
+      - name: Login to ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --grpc-web
+
+      - name: Sync Staging Application
+        run: |
+          argocd app sync lider-staging \
+            --prune \
+            --force \
+            --retry-limit 3
+
+      - name: Wait for Sync
+        run: |
+          argocd app wait lider-staging \
+            --health \
+            --timeout 300
+
+      - name: Run Smoke Tests
+        run: |
+          curl -sf https://staging.lider.ai/health/live || exit 1
+          echo "✅ Staging deployment healthy"
+
+  # ═════════════════════════════════════════════════════════════════
+  # Job 5: Production 배포 승인 및 ArgoCD 동기화
+  # ═════════════════════════════════════════════════════════════════
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://lider.ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl & ArgoCD CLI
+        run: |
+          curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name lider-production --region ap-northeast-2
+
+      - name: Login to ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --grpc-web
+
+      - name: Get Current Revision
+        id: current
+        run: |
+          REV=$(argocd app get lider-production -o json | jq -r '.status.sync.revision')
+          echo "current_revision=$REV" >> $GITHUB_OUTPUT
+
+      - name: Update Image Tags in Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          # kustomize 이미지 태그 업데이트
+          cd k8s/overlays/production
+          kustomize edit set image \
+            backend=${{ needs.build-backend.outputs.image_tag }} \
+            frontend=${{ needs.build-frontend.outputs.image_tag }}
+          
+          git add kustomization.yaml
+          git commit -m "chore: update production images to ${{ github.sha }}"
+          git push
+
+      - name: Sync Production Application
+        run: |
+          argocd app sync lider-production \
+            --force \
+            --retry-limit 5 \
+            --timeout 600
+
+      - name: Wait for Canary Promotion
+        run: |
+          echo "⏳ Waiting for canary analysis..."
+          sleep 60
+          
+          # Rollout 상태 확인
+          kubectl argo rollouts status lider-backend -n lider-production --timeout 15m
+
+      - name: Verify Deployment
+        run: |
+          argocd app wait lider-production \
+            --health \
+            --timeout 600
+
+      - name: Run Production Health Checks
+        run: |
+          curl -sf https://lider.ai/health/live || exit 1
+          curl -sf https://lider.ai/api/health/ready || exit 1
+          echo "✅ Production deployment healthy"
+
+      - name: Notify Slack on Success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          text: '🎉 Production deployment successful!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#alerts'
+          text: '❌ Production deployment failed! Rollback may be needed.'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ═════════════════════════════════════════════════════════════════
+  # Job 6: 배포 후 검증 및 모니터링
+  # ═════════════════════════════════════════════════════════════════
+  post-deploy-verify:
+    name: ✅ Post-Deploy Verification
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Run E2E Tests
+        run: |
+          echo "Running production E2E tests..."
+          # Cypress 또는 Playwright 테스트 실행
+
+      - name: Check Error Rates
+        run: |
+          echo "Checking application error rates..."
+          # Prometheus/Datadog API로 오류율 확인
+
+      - name: Update Deployment Status
+        run: |
+          echo "Deployment verification complete"

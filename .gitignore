@@ -1,0 +1,13 @@
+.playwright-cli/
+output/
+uploads/
+frontend/node_modules/
+frontend/dist/
+frontend/output/
+frontend/.wrangler/
+backend/node_modules/
+backend/dist/
+backend/uploads/
+backend/.env
+ai-proxy/node_modules/
+ai-proxy/dist/

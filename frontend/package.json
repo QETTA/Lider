@@ -1,0 +1,50 @@
+{
+  "name": "yoyang-radar-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:tmp": "bash ./scripts/cloudflare-tmp-run.sh build",
+    "deploy:cloudflare": "npm run build && npx wrangler deploy",
+    "deploy:cloudflare:dry-run": "bash ./scripts/cloudflare-tmp-run.sh dry-run",
+    "deploy:cloudflare:tmp": "bash ./scripts/cloudflare-tmp-run.sh deploy",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "e2e:audit": "node e2e-screenshot-audit.cjs",
+    "e2e:static": "node e2e-static-audit.cjs",
+    "e2e:watch": "node e2e-screenshot-audit.cjs --watch",
+    "e2e:runner": "node e2e-runner.cjs",
+    "e2e:runner:quick": "node e2e-runner.cjs --interval 60000 --runs 10",
+    "e2e:compare": "node e2e-compare.cjs"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^0.294.0",
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^2.4.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-dropzone": "^14.2.3",
+    "react-router-dom": "^6.20.0",
+    "recharts": "^2.10.3",
+    "tailwind-merge": "^2.1.0",
+    "tailwindcss": "^3.3.6",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "playwright": "^1.58.2",
+    "postcss": "^8.4.32",
+    "puppeteer": "^24.40.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  }
+}

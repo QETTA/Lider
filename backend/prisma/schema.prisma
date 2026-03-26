@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 사용자 (사회복지사/관리자)
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String   // bcrypt 해시
+  name        String
+  role        UserRole @default(WORKER)
+  phone       String?
+  centerId    String?
+  center      Center?  @relation(fields: [centerId], references: [id])
+  isActive    Boolean  @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  records     CareRecord[]
+  consultations Consultation[]
+  documents   Document[]
+  onboardingProfile UserOnboardingProfile?
+  
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN      // 시스템 관리자
+  MANAGER    // 센터장
+  WORKER     // 사회복지사
+  VIEWER     // 조회-only
+}
+
+// 복지센터
+model Center {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique // 센터 고유 코드
+  type        CenterType
+  address     String?
+  phone       String?
+  email       String?
+  licenseNumber String? // 사업자등록번호
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  recipients  Recipient[]
+  
+  @@map("centers")
+}
+
+enum CenterType {
+  VISITING  // 재가복지센터
+  FACILITY  // 요양원/시설
+  DAY_CARE  // 주간보호
+  COMPLEX   // 복합센터
+}
+
+// 수급자 (어르신)
+model Recipient {
+  id              String   @id @default(uuid())
+  centerId        String
+  center          Center   @relation(fields: [centerId], references: [id])
+  
+  // 기본 정보
+  name            String
+  birthDate       DateTime
+  gender          Gender
+  phone           String?
+  address         String?
+  emergencyContact String?
+  emergencyPhone  String?
+  
+  // 장기요양 정보
+  longTermCareId  String?  @unique // 수급자번호 (공단)
+  careGrade       CareGrade? // 요양등급 (1-4등급, 미등급)
+  gradeType       GradeType? // 등급 구분
+  careStartDate   DateTime? // 수급개시일
+  careEndDate     DateTime? // 수급종료일
+  contractEndDate DateTime? // 재계약일 (3년 주기)
+  
+  // 건강 정보
+  diseases        Json?    // [{ code: 'ICD-10', name: '질병명' }]
+  disabilities    Json?    // [{ type: '장애유형', level: '등급' }]
+  medications     Json?    // 복용약물
+  allergies       String[]
+  specialNotes    String?  // 특이사항
+  
+  // ADL/IADL (최신 평가)
+  adlScore        Int?     // ADL 점수 (0-100)
+  iadlScore       Int?     // IADL 점수 (0-100)
+  lastEvalDate    DateTime? // 최근 평가일
+  nextEvalDate    DateTime? // 다음 평가 예정일
+  
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  documents       Document[]
+  records         CareRecord[]
+  consultations   Consultation[]
+  evaluations     Evaluation[]
+  
+  @@map("recipients")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum CareGrade {
+  GRADE_1  // 1등급 (심한 중증)
+  GRADE_2  // 2등급 (중증)
+  GRADE_3  // 3등급 (중등도)
+  GRADE_4  // 4등급 (경증)
+  PENDING  // 미등급
+}
+
+enum GradeType {
+  GENERAL  // 일반
+  DEMENTIA // 치매
+  HOSPICE  // 호스피스
+}
+
+// 평가 문서 (공단 평가/재계약 관련)
+model Evaluation {
+  id              String   @id @default(uuid())
+  recipientId     String
+  recipient       Recipient @relation(fields: [recipientId], references: [id])
+  
+  type            EvalType
+  status          EvalStatus @default(PENDING)
+  
+  // 평가 정보
+  evalDate        DateTime?
+  validUntil      DateTime? // 유효기간
+  score           Int?      // 총점
+  
+  // ADL 상세
+  adlDetails      Json?     // { mobility: 5, bathing: 3, ... }
+  iadlDetails     Json?     // { cooking: 2, cleaning: 1, ... }
+  cognitiveScore  Int?      // 인지기능 점수
+  
+  // 문서 상태
+  hasDoctorNote   Boolean   @default(false) // 의사소견서
+  hasEvalForm     Boolean   @default(false) // 기능평가표
+  hasContract     Boolean   @default(false) // 재계약신청서
+  missingDocs     String[]  // 누락 문서 목록
+  
+  // AI 분석 결과
+  aiSummary       String?   @db.Text
+  aiRecommendations Json?   // [{ type: 'warn', message: '...' }]
+  
+  // 원본 파일
+  documentUrl     String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("evaluations")
+}
+
+enum EvalType {
+  INITIAL      // 초기 평가
+  RE_EVAL      // 재평가
+  CONTRACT     // 재계약
+  CHANGE       // 등급 변경
+  TERMINATION  // 해지
+}
+
+enum EvalStatus {
+  PENDING    // 대기중
+  IN_PROGRESS // 진행중
+  COMPLETED  // 완료
+  EXPIRED    // 만료
+  REJECTED   // 반려
+}
+
+// 케어 기록 (Mobile Entry)
+model CareRecord {
+  id              String   @id @default(uuid())
+  recipientId     String
+  recipient       Recipient @relation(fields: [recipientId], references: [id])
+  workerId        String
+  worker          User     @relation(fields: [workerId], references: [id])
+  
+  type            RecordType
+  recordDate      DateTime // 기록일
+  visitTime       DateTime? // 방문시간
+  leaveTime       DateTime? // 종료시간
+  
+  // 신체/건강
+  bloodPressure   String?  // 혈압 (120/80)
+  pulse           Int?     // 맥박
+  temperature     Float?   // 체온
+  weight          Float?   // 체중
+  bloodSugar      Int?     // 혈당
+  
+  // 활동 기록
+  activities      Json?    // [{ type: '운동', duration: 30, note: '...' }]
+  meals           Json?    // [{ type: '아침', intake: 80, menu: '...' }]
+  elimination     Json?    // { urine: '정상', stool: '정상' }
+  sleepStatus     String?  // 수면 상태
+  
+  // 특이사항
+  condition       String?  @db.Text // 어르신 상태
+  specialNotes    String?  @db.Text // 특이사항
+  incidentReport  String?  @db.Text // 사고/이상 발생
+  
+  // AI 초안 (Consultation 연결)
+  aiDraftId       String?
+  
+  // 위치 정보 (모바일)
+  location        Json?    // { lat: 37.5665, lng: 126.9780, address: '...' }
+  photos          String[] // 사진 URLs
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("care_records")
+}
+
+enum RecordType {
+  VISIT      // 재가방문
+  DAY_CARE   // 주간보호
+  OVERNIGHT  // 입소
+  EMERGENCY  // 응급
+  PHONE      // 전화상담
+}
+
+// 상담 일지
+model Consultation {
+  id              String   @id @default(uuid())
+  recipientId     String
+  recipient       Recipient @relation(fields: [recipientId], references: [id])
+  workerId        String
+  worker          User     @relation(fields: [workerId], references: [id])
+  
+  type            ConsultType
+  date            DateTime
+  method          String   // 대면/전화/화상
+  
+  // 상담 내용
+  subject         String   // 상담 주제
+  content         String   @db.Text // 상담 내용
+  aiDraft         String?  @db.Text // AI 작성 초안
+  aiEdited        Boolean  @default(false) // AI 초안 수정 여부
+  
+  // 결과/후속
+  result          String?  @db.Text // 상담 결과
+  actionItems     Json?    // 후속 조치 [{ task: '...', due: '...', done: false }]
+  
+  // 가족/보호자
+  familyPresent   Boolean  @default(false)
+  familyNotes     String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("consultations")
+}
+
+enum ConsultType {
+  INITIAL      // 초기 상담
+  REGULAR      // 정기 상담
+  CRISIS       // 위기 상담
+  FAMILY       // 가족 상담
+  COORDINATION // 연계 상담
+}
+
+// 문서 (Extract 대상)
+model Document {
+  id              String   @id @default(uuid())
+  recipientId     String?
+  recipient       Recipient? @relation(fields: [recipientId], references: [id])
+  uploadedBy      String
+  uploader        User     @relation(fields: [uploadedBy], references: [id])
+  
+  type            DocType
+  status          DocStatus @default(PENDING)
+  
+  // 파일 정보
+  fileName        String
+  fileUrl         String
+  fileSize        Int
+  mimeType        String
+  
+  // AI 추출 결과
+  extractedData   Json?    // 추출된 필드 데이터
+  extractedText   String?  @db.Text // OCR 원문
+  confidence      Float?   // 추출 신뢰도
+  
+  // 검증 결과
+  validationErrors Json?   // 검증 오류 [{ field: '...', message: '...' }]
+  missingFields   String[] // 누락 필드
+  
+  // 메타데이터
+  pageCount       Int?
+  ocrEngine       String?  // OCR 엔진 정보
+  aiModel         String?  // 사용된 AI 모델
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("documents")
+}
+
+enum DocType {
+  EVAL_FORM      // 장기요양 기능평가표
+  DOCTOR_NOTE    // 의사소견서
+  DIAGNOSIS      // 진단서
+  CONTRACT       // 재계약신청서
+  CARE_PLAN      // 돌봄계획서
+  CARE_RECORD    // 서비스 제공기록
+  GENERAL        // 일반 문서
+}
+
+enum DocStatus {
+  PENDING    // 처리 대기
+  PROCESSING // AI 처리중
+  EXTRACTED  // 추출 완료
+  VALIDATED  // 검증 완료
+  ERROR      // 오류
+  REJECTED   // 반려
+}
+
+// 공공데이터 캐시 (API 호출 최적화)
+model PublicDataCache {
+  id          String   @id @default(uuid())
+  apiType     String   // API 유형 (급여정보, 등급조회 등)
+  cacheKey    String   @unique // 캐시 키 (수급자번호 등)
+  data        Json     // 캐시된 데이터
+  expiresAt   DateTime // 만료 시간
+  createdAt   DateTime @default(now())
+
+  @@map("public_data_cache")
+}
+
+// 감사 로그 (엔터프라이즈)
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String   // 행동 유형 (CREATE, UPDATE, DELETE, VIEW)
+  resource    String   // 대상 리소스 (recipient, document, etc)
+  resourceId  String?  // 대상 ID
+  details     Json?    // 상세 정보
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
+}
+
+model UserOnboardingProfile {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role                 String?
+  roleContext          String?
+  centerType           String?
+  teamSize             String?
+  onboardingGoals      String[] @default([])
+  setupPriorities      String[] @default([])
+  communicationChannel String?
+  handoverNote         String?  @db.Text
+  completedAt          DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("user_onboarding_profiles")
+}

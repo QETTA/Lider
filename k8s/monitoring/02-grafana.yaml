@@ -1,0 +1,363 @@
+---
+# Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-yoyang-radar
+  namespace: yoyang-radar
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+data:
+  dashboard.yml: |
+    apiVersion: 1
+    providers:
+      - name: 'yoyang-radar'
+        orgId: 1
+        folder: '요양레이다'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/yoyang-radar
+  
+  # Main System Overview Dashboard
+  yoyang-radar-overview.json: |
+    {
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+          "id": 1,
+          "panels": [],
+          "title": "📊 시스템 개요",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 70},
+                  {"color": "red", "value": 90}
+                ]
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1},
+          "id": 2,
+          "options": {"orientation": "auto", "reduceOptions": {"values": false}},
+          "pluginVersion": "9.5.0",
+          "targets": [
+            {
+              "expr": "avg(rate(container_cpu_usage_seconds_total{namespace=\"yoyang-radar\",container!=\"POD\"}[5m]) * 100)",
+              "refId": "A"
+            }
+          ],
+          "title": "CPU 사용률 (평균)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 70},
+                  {"color": "red", "value": 90}
+                ]
+              },
+              "unit": "percent"
+            }
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1},
+          "id": 3,
+          "options": {"orientation": "auto", "reduceOptions": {"values": false}},
+          "pluginVersion": "9.5.0",
+          "targets": [
+            {
+              "expr": "avg(container_memory_working_set_bytes{namespace=\"yoyang-radar\",container!=\"POD\"} / container_spec_memory_limit_bytes * 100)",
+              "refId": "A"
+            }
+          ],
+          "title": "메모리 사용률 (평균)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"fixedColor": "blue", "mode": "fixed"},
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]},
+              "unit": "reqps"
+            }
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1},
+          "id": 4,
+          "options": {"orientation": "auto", "reduceOptions": {"values": false}},
+          "pluginVersion": "9.5.0",
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total{namespace=\"yoyang-radar\"}[5m]))",
+              "refId": "A"
+            }
+          ],
+          "title": "요청률 (RPS)",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.01},
+                  {"color": "red", "value": 0.05}
+                ]
+              },
+              "unit": "percentunit"
+            }
+          },
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 1},
+          "id": 5,
+          "options": {"orientation": "auto", "reduceOptions": {"values": false}},
+          "pluginVersion": "9.5.0",
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total{status=~\"5..\",namespace=\"yoyang-radar\"}[5m])) / sum(rate(http_requests_total{namespace=\"yoyang-radar\"}[5m]))",
+              "refId": "A"
+            }
+          ],
+          "title": "에러율",
+          "type": "stat"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 5},
+          "id": 6,
+          "panels": [],
+          "title": "🏥 EMR/AI 연동",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+              "unit": "s"
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+          "id": 7,
+          "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(yoyangradar_ai_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "AI API P95",
+              "refId": "A"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum(rate(yoyangradar_ai_request_duration_seconds_bucket[5m])) by (le))",
+              "legendFormat": "AI API P50",
+              "refId": "B"
+            }
+          ],
+          "title": "Kimi AI 응답 시간",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+            }
+          },
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+          "id": 8,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.5.0",
+          "targets": [
+            {
+              "expr": "sum(yoyangradar_external_api_requests_total{namespace=\"yoyang-radar\"}) by (endpoint, status)",
+              "format": "table",
+              "instant": true,
+              "refId": "A"
+            }
+          ],
+          "title": "외부 API 호출 현황",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "indexByName": {},
+                "renameByName": {
+                  "endpoint": "엔드포인트",
+                  "status": "상태",
+                  "Value": "요청수"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 14},
+          "id": 9,
+          "panels": [],
+          "title": "📈 트래픽 상세",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${prometheus}"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"}
+              },
+              "unit": "reqps"
+            }
+          },
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 15},
+          "id": 10,
+          "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total{namespace=\"yoyang-radar\"}[5m])) by (path)",
+              "legendFormat": "{{ path }}",
+              "refId": "A"
+            }
+          ],
+          "title": "API 엔드포인트별 요청률",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["yoyang-radar", "monitoring"],
+      "templating": {
+        "list": [
+          {
+            "current": {"selected": false, "text": "Prometheus", "value": "prometheus"},
+            "hide": 0,
+            "includeAll": false,
+            "multi": false,
+            "name": "prometheus",
+            "options": [],
+            "query": "prometheus",
+            "refresh": 1,
+            "regex": "",
+            "skipUrlSync": false,
+            "type": "datasource"
+          }
+        ]
+      },
+      "time": {"from": "now-6h", "to": "now"},
+      "timepicker": {},
+      "timezone": "Asia/Seoul",
+      "title": "요양레이다 시스템 개요",
+      "uid": "yoyang-radar-overview",
+      "version": 1,
+      "weekStart": ""
+    }
+---
+# Grafana Datasource ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: yoyang-radar
+  labels:
+    app.kubernetes.io/name: grafana
+data:
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        isDefault: true
+        editable: false
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.monitoring.svc.cluster.local:3100
+        editable: false
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo.monitoring.svc.cluster.local:3200
+        editable: false
