@@ -10,6 +10,25 @@ export default {
         sans: ['var(--font-sans)', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         display: ['var(--font-display)', 'MaruBuri', 'Iowan Old Style', 'Georgia', 'serif'],
       },
+      maxWidth: {
+        'container-xl': 'var(--container-xl)',
+        'container-lg': 'var(--container-lg)',
+        'container-md': 'var(--container-md)',
+        'container-sm': 'var(--container-sm)',
+        'prose-narrow': '28rem',
+        'prose': '35rem',
+        'ch-7': '7.2em',
+        'ch-9': '9.5ch',
+      },
+      fontSize: {
+        '2xs': 'var(--text-2xs)',
+        'md': 'var(--text-md)',
+        '5xl': 'var(--text-5xl)',
+        '6xl': 'var(--text-6xl)',
+        '7xl': 'var(--text-7xl)',
+        '8xl': 'var(--text-8xl)',
+        '9xl': 'var(--text-9xl)',
+      },
       colors: {
         // LIDER Oatmeal + Catalyst Design System
         canvas: {
@@ -23,6 +42,32 @@ export default {
           soft: 'var(--surface-soft)',
           tint: 'var(--surface-tint)',
           overlay: 'var(--surface-overlay)',
+          // Alpha variants
+          70: 'var(--surface-70)',
+          80: 'var(--surface-80)',
+          82: 'var(--surface-82)',
+          84: 'var(--surface-84)',
+          86: 'var(--surface-86)',
+          88: 'var(--surface-88)',
+          90: 'var(--surface-90)',
+          92: 'var(--surface-92)',
+          94: 'var(--surface-94)',
+          96: 'var(--surface-96)',
+          98: 'var(--surface-98)',
+          // Action surface alphas
+          'action-72': 'var(--action-surface-72)',
+          'action-76': 'var(--action-surface-76)',
+          'action-78': 'var(--action-surface-78)',
+          'action-82': 'var(--action-surface-82)',
+          // Brand surface alphas
+          'brand-10': 'var(--brand-surface-10)',
+          'brand-12': 'var(--brand-surface-12)',
+          'brand-14': 'var(--brand-surface-14)',
+          // Warning surface alphas
+          'warning-10': 'var(--warning-surface-10)',
+          // Dark surface alphas
+          'dark-82': 'var(--dark-surface-82)',
+          'dark-92': 'var(--dark-surface-92)',
         },
         brand: {
           900: 'var(--brand-900)',
@@ -48,6 +93,11 @@ export default {
           strong: 'var(--border-strong)',
           accent: 'var(--border-accent)',
           overlay: 'var(--border-overlay)',
+          // Brand border alpha variants
+          'brand-10': 'var(--brand-border-10)',
+          'brand-12': 'var(--brand-border-12)',
+          'brand-14': 'var(--brand-border-14)',
+          'brand-16': 'var(--brand-border-16)',
         },
         success: {
           600: 'var(--success-600)',
