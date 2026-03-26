@@ -7,33 +7,106 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['var(--font-display)', 'MaruBuri', 'Iowan Old Style', 'Georgia', 'serif'],
       },
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        // LIDER Oatmeal + Catalyst Design System
+        canvas: {
+          DEFAULT: 'var(--canvas)',
+          muted: 'var(--canvas-muted)',
+          soft: 'var(--canvas-soft)',
         },
-        medical: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e',
-          600: '#16a34a',
+        surface: {
+          DEFAULT: 'var(--surface)',
+          strong: 'var(--surface-strong)',
+          soft: 'var(--surface-soft)',
+          tint: 'var(--surface-tint)',
+          overlay: 'var(--surface-overlay)',
         },
-        calm: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          500: '#8b5cf6',
-          600: '#7c3aed',
+        brand: {
+          900: 'var(--brand-900)',
+          800: 'var(--brand-800)',
+          700: 'var(--brand-700)',
+          600: 'var(--brand-600)',
+          500: 'var(--brand-500)',
         },
+        action: {
+          700: 'var(--action-700)',
+          600: 'var(--action-600)',
+          500: 'var(--action-500)',
+          100: 'var(--action-100)',
+        },
+        text: {
+          strong: 'var(--text-strong)',
+          primary: 'var(--text-primary)',
+          muted: 'var(--text-muted)',
+          soft: 'var(--text-soft)',
+        },
+        border: {
+          subtle: 'var(--border-subtle)',
+          strong: 'var(--border-strong)',
+          accent: 'var(--border-accent)',
+          overlay: 'var(--border-overlay)',
+        },
+        success: {
+          600: 'var(--success-600)',
+          100: 'var(--success-100)',
+        },
+        warning: {
+          600: 'var(--warning-600)',
+          100: 'var(--warning-100)',
+        },
+        danger: {
+          600: 'var(--danger-600)',
+          100: 'var(--danger-100)',
+        },
+        info: {
+          600: 'var(--info-600)',
+          100: 'var(--info-100)',
+        },
+        emotion: {
+          accent: 'var(--emotion-accent)',
+          surface: 'var(--emotion-surface)',
+          border: 'var(--emotion-border)',
+        },
+      },
+      borderRadius: {
+        'sm': 'var(--radius-sm)',
+        'md': 'var(--radius-md)',
+        'lg': 'var(--radius-lg)',
+        'xl': 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        'full': 'var(--radius-full)',
+      },
+      spacing: {
+        '1': 'var(--space-1)',
+        '2': 'var(--space-2)',
+        '3': 'var(--space-3)',
+        '4': 'var(--space-4)',
+        '6': 'var(--space-6)',
+        '8': 'var(--space-8)',
+        '10': 'var(--space-10)',
+        '14': 'var(--space-14)',
+      },
+      boxShadow: {
+        'card': 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        'float': 'var(--shadow-float)',
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.08)',
+        'glass-lg': '0 16px 48px rgba(0, 0, 0, 0.12)',
+        'soft': '0 4px 20px rgba(0, 0, 0, 0.05)',
+        'focus': '0 0 0 3px var(--focus-ring)',
+        'focus-strong': '0 0 0 3px var(--focus-ring-strong)',
+      },
+      transitionTimingFunction: {
+        'smooth': 'var(--ease-smooth)',
+        'soft': 'var(--ease-soft)',
+      },
+      transitionDuration: {
+        'fast': 'var(--duration-fast)',
+        'normal': 'var(--duration-normal)',
+        'slow': 'var(--duration-slow)',
       },
       backdropBlur: {
         xs: '2px',
@@ -60,20 +133,9 @@ export default {
           '50%': { transform: 'translateY(-10px)' },
         },
         glow: {
-          '0%': { boxShadow: '0 0 5px rgba(14, 165, 233, 0.4)' },
-          '100%': { boxShadow: '0 0 20px rgba(14, 165, 233, 0.6)' },
+          '0%': { boxShadow: '0 0 5px rgba(19, 125, 128, 0.4)' },
+          '100%': { boxShadow: '0 0 20px rgba(19, 125, 128, 0.6)' },
         },
-      },
-      boxShadow: {
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.08)',
-        'glass-lg': '0 16px 48px rgba(0, 0, 0, 0.12)',
-        'soft': '0 4px 20px rgba(0, 0, 0, 0.05)',
-        'glow': '0 0 20px rgba(14, 165, 233, 0.4)',
-      },
-      borderRadius: {
-        '2xl': '16px',
-        '3xl': '24px',
-        '4xl': '32px',
       },
     },
   },
