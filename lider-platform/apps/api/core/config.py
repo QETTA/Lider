@@ -4,7 +4,7 @@ Pydantic Settings 기반 환경 설정
 """
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field, AnyUrl, RedisDsn
+from pydantic import Field, RedisDsn
 
 
 class Settings(BaseSettings):

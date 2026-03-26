@@ -4,8 +4,8 @@ PII Redaction, Data Masking, Security Utilities
 """
 import re
 import hashlib
-import base64
-from typing import Dict, Any, List, Optional, Union, Set
+from datetime import datetime, timezone
+from typing import Dict, Any, List, Optional, Set
 from enum import Enum
 import structlog
 
@@ -310,7 +310,7 @@ def sanitize_for_audit(
         "raw_content", "file_content", "image_data"
     }
 
-    result = {}
+    result: Dict[str, Any] = {}
     for key, value in data.items():
         # 민감한 필드 제거
         if any(s in key.lower() for s in exclude):
@@ -344,7 +344,7 @@ class AuditLogger:
             action=action,
             resource=resource,
             details=safe_details,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
 
     @staticmethod
@@ -363,5 +363,5 @@ class AuditLogger:
             table=table,
             record_id=record_id,
             changes=sanitize_for_audit(changes or {}),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )

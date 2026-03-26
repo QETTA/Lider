@@ -4,7 +4,7 @@ Clean Architecture: Domain Exceptions + Infrastructure Handlers
 """
 from enum import Enum
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 import structlog
@@ -71,7 +71,7 @@ class LIDERException(Exception):
         self.details = details or {}
         self.request_id = request_id
         self.status_code = status_code
-        self.timestamp = datetime.utcnow().isoformat()
+        self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def to_dict(self) -> Dict[str, Any]:
         """예외를 딕셔너리로 변환 (API 응답용)"""

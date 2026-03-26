@@ -3,9 +3,7 @@ LIDER Redis 캐시 클라이언트
 TTL 및 크기 제한 관리
 """
 import json
-import pickle
-from typing import Optional, Any, Union
-from datetime import timedelta
+from typing import Optional, Any
 
 import redis.asyncio as redis
 from core.config import settings
@@ -35,6 +33,8 @@ class RedisCache:
     async def get(self, key: str) -> Optional[Any]:
         """캐시 값 조회"""
         await self.connect()
+        if self._redis is None:
+            return None
         value = await self._redis.get(key)
         if value is None:
             return None
@@ -52,36 +52,44 @@ class RedisCache:
     ) -> bool:
         """캐시 값 저장 (크기 제한 적용)"""
         await self.connect()
-        
+        if self._redis is None:
+            return False
+
         # 직렬화
         if isinstance(value, (dict, list)):
             serialized = json.dumps(value, ensure_ascii=False)
         else:
             serialized = str(value)
-        
+
         # 크기 검사
         size = len(serialized.encode('utf-8'))
         if size > max_size_bytes:
             # 크기 초과 시 저장하지 않음
             return False
-        
+
         await self._redis.setex(key, ttl_seconds, serialized)
         return True
     
     async def delete(self, key: str) -> bool:
         """캐시 값 삭제"""
         await self.connect()
+        if self._redis is None:
+            return False
         result = await self._redis.delete(key)
         return result > 0
     
     async def incr(self, key: str) -> int:
         """카운터 증가"""
         await self.connect()
+        if self._redis is None:
+            return 0
         return await self._redis.incr(key)
     
     async def expire(self, key: str, seconds: int) -> bool:
         """TTL 설정"""
         await self.connect()
+        if self._redis is None:
+            return False
         return await self._redis.expire(key, seconds)
     
     async def get_session(self, session_id: str) -> Optional[dict]:
@@ -147,6 +155,8 @@ class RedisCache:
     async def invalidate_user_sessions(self, user_id: str) -> int:
         """사용자 세션 무효화 (로그아웃/비밀번호 변경 시)"""
         await self.connect()
+        if self._redis is None:
+            return 0
         pattern = f"session:*:{user_id}"
         keys = await self._redis.keys(pattern)
         if keys:
@@ -156,6 +166,8 @@ class RedisCache:
     async def invalidate_role_cache(self, role: str) -> int:
         """역할 캐시 무효화"""
         await self.connect()
+        if self._redis is None:
+            return 0
         pattern = f"permissions:*:{role}"
         keys = await self._redis.keys(pattern)
         if keys:

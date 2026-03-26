@@ -3,8 +3,8 @@ LIDER 데이터베이스 연결 및 ORM 설정
 SQLAlchemy 2.0 비동기 지원 (SQLite/PostgreSQL 호환)
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base, DeclarativeBase
-from sqlalchemy import Column, String, DateTime, Text, Float, Integer, Boolean, JSON, ForeignKey, Index, Numeric
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Column, String, DateTime, Text, Float, Integer, Boolean, JSON, ForeignKey, Index
 from datetime import datetime
 import uuid
 
@@ -16,22 +16,10 @@ class Base(DeclarativeBase):
     pass
 
 
-# 데이터베이스 타입 호환성 처리
-if "sqlite" in str(settings.DATABASE_URL):
-    # SQLite용 타입
-    from sqlalchemy import String as UUIDType
-    from sqlalchemy import Float as NumericType
-    from sqlalchemy import func
-    
-    def generate_uuid():
-        return str(uuid.uuid4())
-else:
-    # PostgreSQL용 타입
-    from sqlalchemy.dialects.postgresql import UUID as UUIDType
-    from sqlalchemy.dialects.postgresql import Numeric as NumericType
-    
-    def generate_uuid():
-        return uuid.uuid4()
+# 데이터베이스 타입 호환성 처리 - SQLite/PostgreSQL 공통 UUID 타입
+def generate_uuid() -> str:
+    """데이터베이스에 적합한 UUID 문자열 생성"""
+    return str(uuid.uuid4())
 
 
 # 비동기 엔진 생성 (SQLite/PostgreSQL)

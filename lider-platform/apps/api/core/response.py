@@ -3,7 +3,7 @@ LIDER Platform - 표준화된 API 응답 시스템
 Clean Architecture: 일관된 응답 형식 보장
 """
 from typing import Dict, Any, Optional, List, TypeVar, Generic
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from enum import Enum
 import time
@@ -130,7 +130,7 @@ class APIResponse(BaseModel, Generic[T]):
             data=data,
             meta=ResponseMeta(
                 request_id=request_id,
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 latency_ms=latency_ms,
                 model_info=model_info,
                 token_usage=token_usage,
@@ -162,7 +162,7 @@ class APIResponse(BaseModel, Generic[T]):
             },
             meta=ResponseMeta(
                 request_id=request_id,
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 latency_ms=0
             )
         )
@@ -182,7 +182,7 @@ class APIResponse(BaseModel, Generic[T]):
             data=data,
             meta=ResponseMeta(
                 request_id=request_id,
-                timestamp=datetime.utcnow().isoformat(),
+                timestamp=datetime.now(timezone.utc).isoformat(),
                 latency_ms=latency_ms,
                 model_info=model_info,
                 warnings=warnings
@@ -232,8 +232,7 @@ class ResponseBuilder:
     ) -> "ResponseBuilder":
         self.token_usage = TokenUsage(
             prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_tokens=prompt_tokens + completion_tokens
+            completion_tokens=completion_tokens
         )
         return self
 

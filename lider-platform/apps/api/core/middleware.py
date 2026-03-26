@@ -7,10 +7,9 @@ LIDER 미들웨어 컴포넌트
 import time
 import uuid
 import re
-from typing import Optional
-from fastapi import Request, Response
+from fastapi import Request, Response, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS, HTTP_503_SERVICE_UNAVAILABLE
+from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 import structlog
 
 from core.config import settings
@@ -38,10 +37,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 # 첫 요청이면 TTL 설정
                 await redis_client.expire(key, 60)
             
-            # 요청 한도 확인
+            # 요청 한도 확인 (burst_limit은 현재 사용하지 않음 - Phase 2에서 구현 예정)
             tier_limit = await self._get_user_tier_limit(user_id)
-            burst_limit = await self._get_user_burst_limit(user_id)
-            
+            _ = await self._get_user_burst_limit(user_id)  # TODO: burst 제한 구현
+
             remaining = tier_limit - current_count
             
             response = await call_next(request)
@@ -191,8 +190,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 # ===== 인증 의존성 함수 =====
-
-from fastapi import HTTPException, status
 
 async def require_auth(request: Request) -> str:
     """
