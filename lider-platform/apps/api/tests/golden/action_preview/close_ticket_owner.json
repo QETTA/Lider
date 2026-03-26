@@ -1,47 +1,55 @@
 {
-  "test_id": "action/close_ticket_owner_001",
+  "test_id": "action_preview/close_ticket_owner_001",
   "category": "action_preview",
+  "priority": "P0",
+  "description": "티켓 소유자의 정상 종료 시도",
   "input": {
     "session_id": "test_sess_001",
     "user_id": "agent_001",
-    "org_id": "org_test",
-    "action_type": "ticket_close",
-    "target_system": "zendesk",
-    "parameters": {
+    "org_id": "org_001",
+    "intent": "close_ticket",
+    "payload": {
       "ticket_id": "T-1001",
-      "reason": "문제 해결됨"
+      "reason": "해결 완료 - 고객 확인",
+      "resolution": "로그인 문제 해결, 비밀번호 재설치 안내"
     },
-    "locale": "ko-KR"
-  },
-  "mock_context": {
-    "ticket": {
-      "id": "T-1001",
-      "subject": "로그인 문제",
-      "requester": "customer@example.com",
-      "assignee": "agent_001",
-      "status": "solved",
-      "created_at": "2024-03-20T10:00:00Z"
-    },
-    "user_permissions": {
-      "can_close": true,
-      "is_owner": true,
-      "is_admin": false
+    "context": {
+      "user_role": "agent",
+      "ticket_owner": "agent_001",
+      "ticket_status": "in_progress",
+      "created_at": "2026-03-20"
     }
   },
   "expected_behavior": {
     "allowed": true,
-    "missing_checks": [],
-    "impact_summary_must_contain": ["T-1001", "종료"],
-    "risks_expected": ["low"],
-    "human_confirmation_required": false,
-    "preconditions_must_pass": ["user_permission", "target_exists"]
+    "permission_checks_passed": ["owner_or_admin"],
+    "impact_summary_required": true,
+    "confirmation_required": false
   },
   "evaluation_criteria": {
-    "permission_check_accuracy": 1.0,
-    "risk_assessment_correct": true,
-    "allowed_decision_correct": true
+    "permission_accuracy": 1.0,
+    "impact_description_accuracy": 0.95
   },
-  "tags": ["ticket_close", "owner", "allowed"],
-  "created_at": "2026-03-24",
-  "last_updated": "2026-03-24"
+  "golden_response": {
+    "allowed": true,
+    "reason": "티켓 소유자 확인됨",
+    "missing_checks": [],
+    "impact_summary": "티켓 T-1001을 종료 상태로 변경합니다. 고객에게 자동 완료 안내 메일이 발송됩니다.",
+    "human_readable_preview": "요청하신 작업은 다음과 같습니다:\n- 티켓 번호: T-1001\n- 변경: 진행중 → 종료\n- 종료 사유: 해결 완료 - 고객 확인\n\n이 작업은 되돌릴 수 있으며, 30일간 보관 후 자동 삭제됩니다.",
+    "human_confirmation_required": false,
+    "recommended_next_step": "execute_action",
+    "side_effects": [
+      "고객에게 완료 안내 메일 발송",
+      "티켓 상태 '종료'로 변경",
+      "처리 시간 통계 업데이트"
+    ],
+    "rollback_info": {
+      "can_rollback": true,
+      "rollback_window_hours": 24,
+      "rollback_method": "reopen_ticket"
+    }
+  },
+  "tags": ["ticket", "close", "owner", "allowed"],
+  "created_at": "2026-03-26",
+  "last_updated": "2026-03-26"
 }

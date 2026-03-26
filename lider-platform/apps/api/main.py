@@ -18,6 +18,13 @@ from core.middleware import (
     PIIRedactionMiddleware,
     RequestLoggingMiddleware
 )
+from core.exceptions import (
+    lider_exception_handler,
+    general_exception_handler,
+    http_exception_handler,
+    LIDERException
+)
+from fastapi import HTTPException
 from routes import assist, extract, action_preview, sessions, files, health, users, badcases, metrics
 
 logger = structlog.get_logger()
@@ -74,6 +81,11 @@ app.include_router(action_preview.router, prefix="/v1", tags=["Actions"])
 app.include_router(users.router, prefix="/v1", tags=["Users"])
 app.include_router(badcases.router, prefix="/v1", tags=["BadCases"])
 app.include_router(metrics.router, prefix="/v1", tags=["Metrics"])
+
+# 표준화된 예외 핸들러 등록 (개선자료 기준 에러 처리 표준화)
+app.add_exception_handler(LIDERException, lider_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 
 @app.exception_handler(Exception)

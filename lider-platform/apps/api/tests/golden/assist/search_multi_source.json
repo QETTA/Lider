@@ -1,59 +1,56 @@
 {
-  "test_id": "assist/search_multi_source_001",
+  "test_id": "assist/search_multi_source_002",
   "category": "assist",
+  "priority": "P0",
+  "description": "멀티툴 조합 검색 - 고객 티켓 및 구매 내역",
   "input": {
     "message": {
-      "text": "지난주 ABC Corp의 미해결 티켓과 최근 구매 내역을 요약해줘"
+      "text": "XYZ Company의 최근 7일간 미해결 티켓과 총 구매 금액을 알려줘"
     },
     "session_id": "test_sess_002",
-    "user_id": "test_agent_001",
-    "org_id": "org_test",
+    "user_id": "test_agent_002",
+    "org_id": "org_001",
     "allowed_tools": ["ticket_read", "crm_lookup"],
-    "response_mode": "answer",
-    "risk_tier": "low"
+    "risk_tier": "medium"
   },
   "expected_behavior": {
     "tools_called": ["crm_lookup", "ticket_read"],
     "tool_order": ["crm_lookup", "ticket_read"],
-    "required_facts": ["unresolved_ticket_count", "recent_purchase_amount", "customer_name"],
-    "answer_must_contain": ["티켓", "구매", "ABC Corp"],
-    "answer_must_not_contain": ["추정", "아마도", "것 같습니다"],
-    "citations_min_count": 2
-  },
-  "expected_behavior": {
-    "tools_called": ["crm_lookup", "ticket_read"],
-    "tool_order": ["crm_lookup", "ticket_read"],
-    "tool_order_correct": true,
-    "required_facts": ["unresolved_ticket_count", "recent_purchase_amount", "customer_name"],
-    "answer_must_contain": ["티켓", "구매", "ABC Corp"],
-    "answer_must_not_contain": ["추정", "아마도", "것 같습니다"],
+    "required_facts": ["unresolved_ticket_count", "total_purchase_amount"],
+    "answer_must_contain": ["티켓", "구매", "XYZ Company"],
+    "answer_must_not_contain": ["추정", "아마도", "것 같습니다", "메모리상"],
     "citations_min_count": 2
   },
   "evaluation_criteria": {
     "tool_accuracy": 1.0,
+    "tool_order_correctness": 1.0,
     "fact_f1": 0.95,
     "groundedness": 1.0,
     "no_hallucination": true
   },
+  "golden_response": {
+    "answer": "XYZ Company의 최근 7일간 미해결 티켓은 3건이며, 총 구매 금액은 15,000,000원입니다.",
+    "facts": [
+      {"key": "unresolved_ticket_count", "value": 3, "source": "ticket_read"},
+      {"key": "total_purchase_amount", "value": 15000000, "source": "crm_lookup"}
+    ],
+    "citations": [
+      {"source_id": "ticket:customer:XYZ Company:open"},
+      {"source_id": "crm:purchase:XYZ Company:last7d"}
+    ]
+  },
   "mock_data": {
     "crm_lookup": {
-      "id": "cust_abc_001",
-      "name": "ABC Corp",
-      "tier": "enterprise",
-      "recent_purchases": [
-        {"item": "License", "amount": 50000, "date": "2024-03-15"}
-      ]
+      "customer_name": "XYZ Company",
+      "total_purchase_7d": 15000000,
+      "tier": "gold"
     },
     "ticket_read": {
-      "unresolved_count": 3,
-      "tickets": [
-        {"id": "T-1001", "subject": "Login issue", "status": "open"},
-        {"id": "T-1002", "subject": "Feature request", "status": "pending"},
-        {"id": "T-1003", "subject": "Billing question", "status": "open"}
-      ]
+      "open_tickets_7d": 3,
+      "tickets": ["T-1001", "T-1002", "T-1003"]
     }
   },
-  "tags": ["multi_tool", "crm_integration", "ticket_integration"],
-  "created_at": "2026-03-24",
-  "last_updated": "2026-03-24"
+  "tags": ["multi_tool", "crm_integration", "ticket_integration", "aggregation"],
+  "created_at": "2026-03-26",
+  "last_updated": "2026-03-26"
 }
