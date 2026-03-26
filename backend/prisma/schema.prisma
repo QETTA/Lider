@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = env("DB_PROVIDER")
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -27,6 +27,7 @@ model User {
   consultations Consultation[]
   documents   Document[]
   schedules   VisitSchedule[]
+  notifications Notification[]
   onboardingProfile UserOnboardingProfile?
 
   @@map("users")
@@ -428,4 +429,59 @@ enum VisitStatus {
   COMPLETED   // 완료
   CANCELLED   // 취소됨
   SKIPPED     // skip (부재 등)
+}
+
+// 알림 시스템 (Notification)
+model Notification {
+  id          String   @id @default(uuid())
+
+  // 수신자
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  // 알림 내용
+  type        NotificationType
+  title       String
+  message     String   @db.Text
+  priority    NotificationPriority @default(NORMAL)
+
+  // 관련 리소스 (선택적)
+  relatedEntityType String? // 'VisitSchedule', 'CareRecord', 'Consultation', etc.
+  relatedEntityId   String?
+
+  // 상태
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+
+  // 채널별 상태
+  channels    Json?    // { push: 'sent'|'failed', email: 'sent'|'failed', sms: 'sent'|'failed' }
+
+  // 예약 발송
+  scheduledFor DateTime? // 예약된 발송 시간 (null이면 즉시)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, isRead, createdAt])
+  @@index([type, createdAt])
+  @@index([scheduledFor])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  VISIT_REMINDER        // 방문 예정 알림 (30분 전)
+  VISIT_OVERDUE         // 방문 지연 알림
+  VISIT_COMPLETED       // 방문 완료 알림
+  SCHEDULE_CHANGED      // 일정 변경 알림
+  NEW_DOCUMENT          // 새 문서 알림
+  CONSULTATION_DUE      // 상담 예정 알림
+  EMERGENCY_ALERT       // 응급 상황 알림
+  SYSTEM_NOTICE         // 시스템 공지
+}
+
+enum NotificationPriority {
+  LOW       // 낮음
+  NORMAL    // 보통
+  HIGH      // 높음
+  URGENT    // 긴급
 }

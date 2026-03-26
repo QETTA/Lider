@@ -463,7 +463,8 @@ async function requestStructuredDocumentExtraction(promptSource: string, documen
   return JSON.parse(response.data.choices[0].message.content);
 }
 
-export const aiService = {
+// AI Service Class
+class AIService {
   // 문서 추출 (Extract)
   async extractDocument(documentUrl: string, documentType: string, recipientId?: string) {
     const kimiClient = createKimiClient();
@@ -486,7 +487,7 @@ export const aiService = {
           },
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.1, // 정확성 우선
+        temperature: 0.1,
       });
 
       const content = response.data.choices[0].message.content;
@@ -507,7 +508,7 @@ export const aiService = {
       logger.error({ err, documentUrl, documentType }, 'Document extraction failed');
       throw err;
     }
-  },
+  }
 
   async extractDocumentFromFile(file: AssistantFileInput, documentType: string, recipientId?: string) {
     const parsedFile = await parseDocumentBuffer(file);
@@ -547,7 +548,7 @@ export const aiService = {
       model: 'kimi-k2.5',
       timestamp: new Date().toISOString(),
     };
-  },
+  }
 
   // 상담 초안 생성
   async generateConsultationDraft(transcribedText: string) {
@@ -576,7 +577,7 @@ export const aiService = {
       logger.error(err, 'Consultation draft generation failed');
       return buildFallbackConsultationDraft(transcribedText);
     }
-  },
+  }
 
   // 케어 기록 기반 상담 초안
   async generateConsultationDraftFromRecords(
@@ -629,7 +630,7 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
       logger.error(err, 'Consultation draft from records failed');
       throw err;
     }
-  },
+  }
 
   async chatWithAssistant(messages: AssistantChatMessage[], context?: AssistantChatContext) {
     const systemPrompt = [
@@ -662,7 +663,7 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
       logger.error({ err }, 'Anthropic assistant chat failed');
       throw err;
     }
-  },
+  }
 
   async analyzeFileWithAssistant(file: AssistantFileInput, context?: AssistantChatContext) {
     const parsedFile = await parseAssistantFile(file);
@@ -734,7 +735,7 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
       );
       throw err;
     }
-  },
+  }
 
   // 통합 검색 (Vector Search + Hybrid Search)
   async intelligentSearch(
@@ -782,7 +783,7 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
         context: context || null,
       },
     };
-  },
+  }
 
   // Vector Search placeholder (for Pinecone/Weaviate integration)
   private async performVectorSearch(
@@ -790,13 +791,11 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
     context?: { recipientId?: string; workerId?: string; centerId?: string },
     filters?: { type?: string; dateRange?: { from?: string; to?: string } }
   ): Promise<{ hits: any[]; total: number; summary: string }> {
-    const provider = process.env.VECTOR_DB_PROVIDER; // 'pinecone' | 'weaviate' | 'pgvector'
+    const provider = process.env.VECTOR_DB_PROVIDER;
     const embeddingModel = process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
 
-    // Step 1: Generate query embedding
     const queryEmbedding = await this.generateEmbedding(query, embeddingModel);
 
-    // Step 2: Vector similarity search
     let hits: any[] = [];
     switch (provider) {
       case 'pinecone':
@@ -812,12 +811,10 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
         throw new Error(`Unsupported vector provider: ${provider}`);
     }
 
-    // Step 3: Rerank with cross-encoder (optional)
     const rerankedHits = process.env.ENABLE_RERANK === 'true'
       ? await this.rerankResults(query, hits)
       : hits;
 
-    // Step 4: Generate LLM summary
     const summary = await this.generateSearchSummary(query, rerankedHits);
 
     return {
@@ -825,7 +822,7 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
       total: rerankedHits.length,
       summary,
     };
-  },
+  }
 
   // Keyword-based search (current production fallback)
   private async performKeywordSearch(
@@ -844,7 +841,6 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
       ],
     }));
 
-    // Search Recipients
     const recipients = await prisma.recipient.findMany({
       where: {
         AND: [
@@ -865,7 +861,6 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
       },
     });
 
-    // Search CareRecords (if recipient context provided)
     let records: any[] = [];
     if (context?.recipientId) {
       records = await prisma.careRecord.findMany({
@@ -905,37 +900,34 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
         meta: { date: r.recordDate, hasPhotos: r.photos.length > 0 },
       })),
     ];
-  },
+  }
 
-  // Embedding generation (placeholder for OpenAI/Local embedding)
-  private async generateEmbedding(text: string, model: string): Promise<number[]> {
-    // TODO: Implement actual embedding generation
-    // Options: 1) OpenAI API, 2) Local Ollama, 3) HuggingFace Inference
+  // Embedding generation (placeholder)
+  private async generateEmbedding(_text: string, _model: string): Promise<number[]> {
     throw new Error('Embedding generation not yet implemented');
-  },
+  }
 
   // Vector DB query implementations (placeholders)
-  private async queryPinecone(embedding: number[], context?: any, filters?: any): Promise<any[]> {
+  private async queryPinecone(_embedding: number[], _context?: any, _filters?: any): Promise<any[]> {
     throw new Error('Pinecone integration not yet implemented');
-  },
-  private async queryWeaviate(embedding: number[], context?: any, filters?: any): Promise<any[]> {
+  }
+  private async queryWeaviate(_embedding: number[], _context?: any, _filters?: any): Promise<any[]> {
     throw new Error('Weaviate integration not yet implemented');
-  },
-  private async queryPgVector(embedding: number[], context?: any, filters?: any): Promise<any[]> {
+  }
+  private async queryPgVector(_embedding: number[], _context?: any, _filters?: any): Promise<any[]> {
     throw new Error('pgvector integration not yet implemented');
-  },
+  }
 
   // Reranking (placeholder)
-  private async rerankResults(query: string, hits: any[]): Promise<any[]> {
-    // TODO: Implement cross-encoder reranking (Cohere/CrossEncoder)
+  private async rerankResults(_query: string, hits: any[]): Promise<any[]> {
     return hits;
-  },
+  }
 
   // Search summary generation (placeholder)
   private async generateSearchSummary(query: string, hits: any[]): Promise<string> {
     if (hits.length === 0) return '검색 결과가 없습니다.';
     return `${hits.length}개의 결과를 찾았습니다. 주요 내용: ${hits.slice(0, 3).map(h => h.title).join(', ')}`;
-  },
+  }
 
   // AI 상태 확인
   async checkStatus() {
@@ -986,12 +978,15 @@ ${previousConsultations ? `\n[이전 상담 내역]\n${previousConsultations.joi
         error: (err as Error).message,
       };
     }
-  },
+  }
 
   // 신뢰도 계산 (추출 필드 기반)
   calculateConfidence(extracted: any): number {
     const hasFields = Object.values(extracted).filter(v => v !== null && v !== undefined && v !== '').length;
     const totalFields = Object.keys(extracted).length;
     return totalFields > 0 ? Math.round((hasFields / totalFields) * 100) : 0;
-  },
-};
+  }
+}
+
+// Export singleton instance
+export const aiService = new AIService();

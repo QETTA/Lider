@@ -6,6 +6,7 @@ import { mobileRoutes } from './mobile';
 import { publicDataRoutes } from './publicData';
 import { aiRoutes } from './ai';
 import { authRoutes } from './auth';
+import { notificationRoutes } from './notifications';
 
 export async function apiRoutes(fastify: FastifyInstance) {
   // 인증/세션
@@ -28,4 +29,7 @@ export async function apiRoutes(fastify: FastifyInstance) {
   
   // AI 서비스
   await fastify.register(aiRoutes, { prefix: '/ai' });
+
+  // 알림 서비스
+  await fastify.register(notificationRoutes, { prefix: '/notifications' });
 }
