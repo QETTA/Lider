@@ -14,6 +14,7 @@ ANTHROPIC_MODEL = "claude-sonnet-4-6"
 # fallback, but they are not part of the core runtime path.
 
 [placement]
+mode = "smart"
 region = "aws:ap-northeast-2"
 
 [assets]
