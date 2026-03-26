@@ -884,6 +884,3 @@ function DiagnosisField({
     </label>
   );
 }
-l>
-  );
-}
