@@ -5,15 +5,19 @@ Extract API Routes
 import time
 import base64
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db, RequestLog, Extraction
-from schemas.extract import ExtractRequest, ExtractResponseData, ExtractedField, ExtractionWarning
+from core.response import ResponseBuilder, create_error_response
+from core.exceptions import (
+    ModelException, ValidationException, DatabaseException,
+    ErrorCode, raise_model_error, raise_validation_error
+)
+from schemas.extract import ExtractRequest, ExtractResponseData, ExtractedField
 from services.model_router import model_router, TaskType
 from services.providers import get_provider_for_model
 from services.validator import validator_pipeline
-from services.evaluator import response_evaluator
 
 import structlog
 logger = structlog.get_logger()
@@ -171,7 +175,7 @@ async def extract(request: ExtractRequest, db: AsyncSession = Depends(get_db)):
         db.add(request_log)
         await db.commit()
         
-        # 9. 응답 구성
+        # 9. 응답 구성 (표준화된 ResponseBuilder 사용)
         response_data = ExtractResponseData(
             extraction_id=extraction_id,
             extracted_fields=[ExtractedField(**f) for f in extracted_data["fields"]],
@@ -180,39 +184,40 @@ async def extract(request: ExtractRequest, db: AsyncSession = Depends(get_db)):
             raw_text=extracted_data.get("raw_text"),
             processing_time_ms=processing_time
         )
+
+        # ResponseBuilder로 표준 응답 생성
+        builder = ResponseBuilder(request_id=request_id)
+        response = (
+            builder
+            .set_data(response_data.model_dump(exclude_none=True))
+            .set_model_info(
+                model_used=model_used,
+                api_model_name=api_model_name,
+                fallback_used=fallback_used,
+                fallback_chain=[route_decision.internal_model] if fallback_used else None
+            )
+            .set_token_usage(
+                prompt_tokens=usage.get("prompt_tokens", 0),
+                completion_tokens=usage.get("completion_tokens", 0)
+            )
+            .set_cost(estimated_cost_usd=route_decision.estimated_cost_usd)
+            .build()
+        )
+
+        return response.model_dump(exclude_none=True)
         
-        return {
-            "success": True,
-            "data": response_data.model_dump(exclude_none=True),
-            "meta": {
-                "request_id": request_id,
-                "timestamp": datetime.utcnow().isoformat(),
-                "latency_ms": processing_time,
-                "model_used": model_used,
-                "api_model_name": api_model_name,
-                "fallback_used": fallback_used,
-                "token_usage": {
-                    "prompt_tokens": usage.get("prompt_tokens", 0),
-                    "completion_tokens": usage.get("completion_tokens", 0),
-                    "total_tokens": usage.get("total_tokens", 0)
-                },
-                "cost": {
-                    "estimated_cost_usd": round(route_decision.estimated_cost_usd, 6)
-                }
-            }
-        }
-        
+    except ValidationException:
+        raise
+    except ModelException:
+        raise
+    except DatabaseException:
+        raise
     except Exception as e:
         logger.error("extract_error", request_id=request_id, error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "success": False,
-                "error": {
-                    "code": "EXTRACTION_ERROR",
-                    "message": "문서 추출 중 오류가 발생했습니다."
-                }
-            }
+        raise DatabaseException(
+            message="문서 추출 중 오류가 발생했습니다",
+            details={"error_type": type(e).__name__, "error": str(e)},
+            request_id=request_id
         )
 
 

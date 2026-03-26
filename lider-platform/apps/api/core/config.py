@@ -57,6 +57,12 @@ class Settings(BaseSettings):
     MAX_RETRIES: int = 3
     TIMEOUT_SECONDS: int = 30
     
+    # 특정 모델 설정
+    ANTHROPIC_MODEL: str = "claude-sonnet-4-6"
+    MOONSHOT_VISION_MODEL: str = "kimi-k2.5"
+    MOONSHOT_REASONING_MODEL: str = "kimi-k2-thinking"
+    MOONSHOT_FAST_MODEL: str = "kimi-k2-0905"
+    
     # 캐싱 TTL (초)
     CACHE_TTL_SESSION: int = 7200  # 2시간
     CACHE_TTL_PERMISSIONS: int = 900  # 15분

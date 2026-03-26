@@ -4,20 +4,24 @@ Assist API Routes
 """
 import time
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 
 from core.database import get_db, RequestLog
 from core.redis_cache import redis_client
 from core.middleware import PIIRedactionMiddleware
-from schemas.assist import AssistRequest, AssistResponseData, Citation, ToolCall, Uncertainty, SuggestedAction
+from core.response import ResponseBuilder
+from core.exceptions import (
+    ModelException, ValidationException, DatabaseException,
+    ErrorCode, raise_model_error
+)
+from schemas.assist import AssistRequest, AssistResponseData, ToolCall
 from services.model_router import model_router, TaskType
 from services.providers import get_provider_for_model
 from services.tool_gateway import tool_gateway
 from services.validator import validator_pipeline
 from services.evaluator import response_evaluator
-from core.config import settings
 
 import structlog
 logger = structlog.get_logger()
@@ -216,19 +220,11 @@ async def assist(request: AssistRequest, db: AsyncSession = Depends(get_db)):
         db.add(request_log)
         await db.commit()
         
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "success": False,
-                "error": {
-                    "code": "MODEL_ERROR",
-                    "message": "AI 모델 응답 생성 중 오류가 발생했습니다."
-                },
-                "meta": {
-                    "request_id": request_id,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
+        # 표준화된 예외 발생
+        raise DatabaseException(
+            message="AI 모델 응답 생성 중 오류가 발생했습니다",
+            details={"original_error": str(e), "error_type": type(e).__name__},
+            request_id=request_id
         )
 
 

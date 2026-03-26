@@ -3,6 +3,7 @@ Pytest Configuration
 테스트 공통 설정 및 Fixture
 """
 import pytest
+import pytest_asyncio
 import asyncio
 from typing import AsyncGenerator, Generator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -39,7 +40,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_database():
     """테스트 데이터베이스 테이블 생성"""
     async with engine.begin() as conn:
@@ -49,7 +50,7 @@ async def setup_database():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """테스트용 DB 세션 제공"""
     async with async_session_maker() as session:

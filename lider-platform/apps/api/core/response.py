@@ -23,16 +23,28 @@ class PaginationInfo(BaseModel):
     page: int = 1
     page_size: int = 20
     total_count: int = 0
-    total_pages: int = 1
-    has_next: bool = False
-    has_prev: bool = False
+
+    @property
+    def total_pages(self) -> int:
+        return max(1, (self.total_count + self.page_size - 1) // self.page_size)
+
+    @property
+    def has_next(self) -> bool:
+        return self.page < self.total_pages
+
+    @property
+    def has_prev(self) -> bool:
+        return self.page > 1
 
 
 class TokenUsage(BaseModel):
     """토큰 사용량 정보"""
     prompt_tokens: int = 0
     completion_tokens: int = 0
-    total_tokens: int = 0
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
 
 
 class CostInfo(BaseModel):
@@ -131,7 +143,7 @@ class APIResponse(BaseModel, Generic[T]):
         )
 
     @classmethod
-    def error(
+    def create_error(
         cls,
         code: str,
         message: str,
@@ -290,7 +302,7 @@ def create_error_response(
     details: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """간단한 에러 응답 생성 (dict 반환)"""
-    response = APIResponse.error(
+    response = APIResponse.create_error(
         code=code,
         message=message,
         request_id=request_id,
