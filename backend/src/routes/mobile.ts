@@ -31,6 +31,27 @@ const voiceEntrySchema = z.object({
   transcribedText: z.string(),
 });
 
+// 방문 일정 생성/수정 스키마
+const scheduleSchema = z.object({
+  recipientId: z.string().uuid(),
+  scheduledDate: z.string().datetime(), // ISO 8601
+  scheduledTime: z.string().datetime().optional(),
+  estimatedDurationMinutes: z.number().int().min(5).max(480).optional(),
+  visitType: z.enum(['VISIT', 'DAY_CARE', 'OVERNIGHT', 'EMERGENCY', 'PHONE']).default('VISIT'),
+  notes: z.string().max(1000).optional(),
+  locationNote: z.string().max(500).optional(),
+});
+
+const scheduleUpdateSchema = z.object({
+  scheduledDate: z.string().datetime().optional(),
+  scheduledTime: z.string().datetime().optional(),
+  estimatedDurationMinutes: z.number().int().min(5).max(480).optional(),
+  visitType: z.enum(['VISIT', 'DAY_CARE', 'OVERNIGHT', 'EMERGENCY', 'PHONE']).optional(),
+  notes: z.string().max(1000).optional(),
+  locationNote: z.string().max(500).optional(),
+  status: z.enum(['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'SKIPPED']).optional(),
+});
+
 export async function mobileRoutes(fastify: FastifyInstance) {
   // 오늘 방문할 수급자 목록 (Mobile용)
   fastify.get('/today-visits', {
@@ -291,6 +312,396 @@ export async function mobileRoutes(fastify: FastifyInstance) {
         failed: results.filter(r => !r.success).length,
         results,
       },
+    };
+  });
+
+  // ====================
+  // VisitSchedule CRUD APIs
+  // ====================
+
+  // 방문 일정 생성
+  fastify.post('/schedules', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 일정 생성',
+      description: '새로운 방문 일정을 생성합니다',
+    },
+    preHandler: requireAuth,
+  }, async (request, reply) => {
+    const data = scheduleSchema.parse(request.body);
+    const workerId = getSessionUserId(request);
+
+    if (!workerId) {
+      return reply.status(401).send({
+        success: false,
+        error: { code: 'SESSION_INVALID', message: '세션이 유효하지 않습니다.' },
+      });
+    }
+
+    const schedule = await prisma.visitSchedule.create({
+      data: {
+        workerId,
+        recipientId: data.recipientId,
+        scheduledDate: new Date(data.scheduledDate),
+        scheduledTime: data.scheduledTime ? new Date(data.scheduledTime) : null,
+        estimatedDurationMinutes: data.estimatedDurationMinutes,
+        visitType: data.visitType,
+        notes: data.notes,
+        locationNote: data.locationNote,
+        status: 'SCHEDULED',
+      },
+      include: {
+        recipient: {
+          select: { id: true, name: true, address: true, careGrade: true, phone: true },
+        },
+      },
+    });
+
+    logger.info({ scheduleId: schedule.id, workerId }, 'Visit schedule created');
+
+    return reply.status(201).send({
+      success: true,
+      data: schedule,
+      message: '방문 일정이 생성되었습니다.',
+    });
+  });
+
+  // 방문 일정 목록 조회 (기간별, 상태별 필터)
+  fastify.get('/schedules', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 일정 목록',
+      description: '기간과 상태로 필터링된 방문 일정 목록을 조회합니다',
+    },
+    preHandler: requireAuth,
+  }, async (request) => {
+    const workerId = getSessionUserId(request);
+    const { from, to, status, recipientId } = request.query as {
+      from?: string;
+      to?: string;
+      status?: string;
+      recipientId?: string;
+    };
+
+    if (!workerId) {
+      return { success: true, data: [], meta: { message: '세션 정보가 없습니다' } };
+    }
+
+    const where: any = { workerId };
+
+    if (from && to) {
+      where.scheduledDate = {
+        gte: new Date(from),
+        lte: new Date(to),
+      };
+    }
+
+    if (status) {
+      where.status = { in: status.split(',') };
+    }
+
+    if (recipientId) {
+      where.recipientId = recipientId;
+    }
+
+    const schedules = await prisma.visitSchedule.findMany({
+      where,
+      include: {
+        recipient: {
+          select: { id: true, name: true, address: true, careGrade: true, phone: true },
+        },
+      },
+      orderBy: [{ scheduledDate: 'asc' }, { scheduledTime: 'asc' }],
+    });
+
+    // 날짜별 그룹핑
+    const grouped = schedules.reduce((acc, schedule) => {
+      const dateKey = schedule.scheduledDate.toISOString().split('T')[0];
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(schedule);
+      return acc;
+    }, {} as Record<string, typeof schedules>);
+
+    return {
+      success: true,
+      data: schedules,
+      grouped,
+      meta: {
+        total: schedules.length,
+        byStatus: {
+          scheduled: schedules.filter(s => s.status === 'SCHEDULED').length,
+          inProgress: schedules.filter(s => s.status === 'IN_PROGRESS').length,
+          completed: schedules.filter(s => s.status === 'COMPLETED').length,
+          cancelled: schedules.filter(s => s.status === 'CANCELLED').length,
+        },
+      },
+    };
+  });
+
+  // 방문 일정 상세 조회
+  fastify.get('/schedules/:id', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 일정 상세',
+      description: '특정 방문 일정의 상세 정보를 조회합니다',
+    },
+    preHandler: requireAuth,
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const workerId = getSessionUserId(request);
+
+    const schedule = await prisma.visitSchedule.findFirst({
+      where: { id, workerId },
+      include: {
+        recipient: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            careGrade: true,
+            phone: true,
+            emergencyPhone: true,
+            longTermCareId: true,
+            specialNotes: true,
+          },
+        },
+      },
+    });
+
+    if (!schedule) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: '방문 일정을 찾을 수 없습니다.' },
+      });
+    }
+
+    return { success: true, data: schedule };
+  });
+
+  // 방문 일정 수정
+  fastify.patch('/schedules/:id', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 일정 수정',
+      description: '방문 일정의 정보를 수정합니다',
+    },
+    preHandler: requireAuth,
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const data = scheduleUpdateSchema.parse(request.body);
+    const workerId = getSessionUserId(request);
+
+    const existing = await prisma.visitSchedule.findFirst({
+      where: { id, workerId },
+    });
+
+    if (!existing) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: '방문 일정을 찾을 수 없습니다.' },
+      });
+    }
+
+    // 완료된 일정은 수정 불가 (상태 변경만 가능)
+    if (existing.status === 'COMPLETED' && (data.scheduledDate || data.scheduledTime)) {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'COMPLETED_SCHEDULE', message: '완료된 일정의 시간은 수정할 수 없습니다.' },
+      });
+    }
+
+    const updated = await prisma.visitSchedule.update({
+      where: { id },
+      data: {
+        scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+        scheduledTime: data.scheduledTime ? new Date(data.scheduledTime) : undefined,
+        estimatedDurationMinutes: data.estimatedDurationMinutes,
+        visitType: data.visitType,
+        notes: data.notes,
+        locationNote: data.locationNote,
+        status: data.status,
+        completedAt: data.status === 'COMPLETED' && !existing.completedAt ? new Date() : undefined,
+      },
+      include: {
+        recipient: {
+          select: { id: true, name: true, address: true, careGrade: true, phone: true },
+        },
+      },
+    });
+
+    logger.info({ scheduleId: id, updates: Object.keys(data) }, 'Visit schedule updated');
+
+    return {
+      success: true,
+      data: updated,
+      message: '방문 일정이 수정되었습니다.',
+    };
+  });
+
+  // 방문 일정 삭제
+  fastify.delete('/schedules/:id', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 일정 삭제',
+      description: '방문 일정을 삭제합니다 (완료된 일정은 삭제 불가)',
+    },
+    preHandler: requireAuth,
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const workerId = getSessionUserId(request);
+
+    const existing = await prisma.visitSchedule.findFirst({
+      where: { id, workerId },
+    });
+
+    if (!existing) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: '방문 일정을 찾을 수 없습니다.' },
+      });
+    }
+
+    if (existing.status === 'COMPLETED') {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'COMPLETED_SCHEDULE', message: '완료된 일정은 삭제할 수 없습니다.' },
+      });
+    }
+
+    await prisma.visitSchedule.delete({ where: { id } });
+
+    logger.info({ scheduleId: id }, 'Visit schedule deleted');
+
+    return {
+      success: true,
+      message: '방문 일정이 삭제되었습니다.',
+    };
+  });
+
+  // 방문 시작 (IN_PROGRESS로 변경)
+  fastify.post('/schedules/:id/start', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 시작',
+      description: '방문 일정을 진행중 상태로 변경하고 CareRecord를 생성합니다',
+    },
+    preHandler: requireAuth,
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const workerId = getSessionUserId(request);
+    const { location } = request.body as { location?: { lat: number; lng: number; address: string } };
+
+    const schedule = await prisma.visitSchedule.findFirst({
+      where: { id, workerId },
+      include: {
+        recipient: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    if (!schedule) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: '방문 일정을 찾을 수 없습니다.' },
+      });
+    }
+
+    if (schedule.status === 'COMPLETED') {
+      return reply.status(400).send({
+        success: false,
+        error: { code: 'ALREADY_COMPLETED', message: '이미 완료된 방문입니다.' },
+      });
+    }
+
+    const now = new Date();
+
+    // CareRecord 생성
+    const careRecord = await prisma.careRecord.create({
+      data: {
+        recipientId: schedule.recipientId,
+        workerId,
+        type: schedule.visitType,
+        recordDate: now,
+        visitTime: now,
+        location,
+        condition: '방문 시작',
+      },
+    });
+
+    // VisitSchedule 업데이트
+    const updated = await prisma.visitSchedule.update({
+      where: { id },
+      data: {
+        status: 'IN_PROGRESS',
+        relatedCareRecordId: careRecord.id,
+      },
+    });
+
+    logger.info({ scheduleId: id, careRecordId: careRecord.id }, 'Visit started');
+
+    return {
+      success: true,
+      data: {
+        schedule: updated,
+        careRecord,
+      },
+      message: '방문이 시작되었습니다.',
+    };
+  });
+
+  // 방문 완료
+  fastify.post('/schedules/:id/complete', {
+    schema: {
+      tags: ['Mobile', 'Schedule'],
+      summary: '방문 완료',
+      description: '방문 일정을 완료 상태로 변경하고 CareRecord를 업데이트합니다',
+    },
+    preHandler: requireAuth,
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const workerId = getSessionUserId(request);
+    const completionData = request.body as any;
+
+    const schedule = await prisma.visitSchedule.findFirst({
+      where: { id, workerId },
+    });
+
+    if (!schedule) {
+      return reply.status(404).send({
+        success: false,
+        error: { code: 'NOT_FOUND', message: '방문 일정을 찾을 수 없습니다.' },
+      });
+    }
+
+    const now = new Date();
+
+    // CareRecord 업데이트 (있는 경우)
+    if (schedule.relatedCareRecordId) {
+      await prisma.careRecord.update({
+        where: { id: schedule.relatedCareRecordId },
+        data: {
+          leaveTime: now,
+          ...completionData,
+        },
+      });
+    }
+
+    // VisitSchedule 완료 처리
+    const updated = await prisma.visitSchedule.update({
+      where: { id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: now,
+      },
+    });
+
+    logger.info({ scheduleId: id, duration: schedule.estimatedDurationMinutes }, 'Visit completed');
+
+    return {
+      success: true,
+      data: updated,
+      message: '방문이 완료되었습니다.',
     };
   });
 }
