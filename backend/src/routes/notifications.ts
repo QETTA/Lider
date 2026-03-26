@@ -1,11 +1,14 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/requireAuth';
 import { notificationService } from '../services/notificationService';
 
 // 세션 유저 ID 추출
-function getSessionUserId(request: any): string | null {
-  return typeof request.user?.sub === 'string' ? request.user.sub : null;
+function getSessionUserId(request: FastifyRequest): string | null {
+  const user = (request as unknown as Record<string, unknown>).user;
+  return typeof user === 'object' && user !== null && 'sub' in user
+    ? (user as Record<string, unknown>).sub as string
+    : null;
 }
 
 // 알림 생성 스키마 (Admin용)
@@ -44,16 +47,15 @@ export async function notificationRoutes(fastify: FastifyInstance) {
       return { success: false, error: { code: 'UNAUTHORIZED', message: '인증이 필요합니다' } };
     }
 
-    const { unreadOnly, limit, offset } = request.query as {
-      unreadOnly?: string;
-      limit?: string;
-      offset?: string;
-    };
+    const query = request.query as Record<string, string | undefined>;
+    const unreadOnly = query.unreadOnly === 'true';
+    const limit = query.limit ? parseInt(query.limit, 10) : 20;
+    const offset = query.offset ? parseInt(query.offset, 10) : 0;
 
     const result = await notificationService.getUserNotifications(userId, {
-      unreadOnly: unreadOnly === 'true',
-      limit: limit ? parseInt(limit, 10) : 20,
-      offset: offset ? parseInt(offset, 10) : 0,
+      unreadOnly,
+      limit,
+      offset,
     });
 
     return {
