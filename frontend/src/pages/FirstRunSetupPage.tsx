@@ -26,7 +26,7 @@ const setupPriorities = [
 
 const communicationChannels = [
   { value: 'kakao', label: '카카오톡/메신저 중심', description: '빠른 확인과 짧은 후속 메시지가 중심인 팀' },
-  { value: 'phone', label: '전화/문자 중심', description: '보호자 통화와 즉시 연락이 운영의 중심인 팀' },
+  { value: 'phone', label: '전화/문자 중심', description: '담당자 통화와 즉시 연락이 운영의 중심인 팀' },
   { value: 'internal-note', label: '센터 내부 메모 중심', description: '내부 메모와 인수인계 정리가 우선인 팀' },
 ];
 
@@ -37,7 +37,7 @@ const roleLabels: Record<string, string> = {
 };
 
 const centerTypeLabels: Record<string, string> = {
-  'home-care': '방문요양 중심',
+  'home-care': '방문 서비스 중심',
   'mixed-care': '방문 + 상담 혼합',
   'growing-team': '확장 중인 신규 팀',
 };

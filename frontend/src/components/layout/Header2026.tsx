@@ -53,7 +53,7 @@ export function Header2026({ onMenuToggle, isDesktop }: HeaderProps) {
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-sm font-semibold text-[color:var(--text-strong)] sm:text-base">은샘노인재가복지센터</span>
+                  <span className="truncate text-sm font-semibold text-[color:var(--text-strong)] sm:text-base">LIDER</span>
                   {!isDesktop && <StatusBadge variant={statusBadge.variant} label={statusBadge.label} dot={false} size="sm" />}
                 </div>
                 <p className="mt-1 text-xs text-[color:var(--text-muted)]">{statusSummary}</p>

@@ -113,7 +113,7 @@ export function LoginPage() {
               value={form.centerName}
               onChange={(event) => setForm((prev) => ({ ...prev, centerName: event.target.value }))}
               className="auth-field"
-              placeholder="예: 은샘노인재가복지센터"
+              placeholder="예: 주식회사 엘아이더"
               autoComplete="organization"
               aria-invalid={Boolean(errors.centerName)}
             />

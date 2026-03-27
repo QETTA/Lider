@@ -306,7 +306,7 @@ async function fetchDocumentBoards(apiBaseUrl: string): Promise<{ boards: Docume
   const results = await Promise.allSettled(
     recipients.map(async (recipient) => {
       if (!recipient.id) {
-        throw new Error('수급자 식별자가 없습니다.');
+        throw new Error('고객 식별자가 없습니다.');
       }
 
       const completeness = await requestJson<CompletenessApiRecord>(apiBaseUrl, `/v1/extract/completeness/${recipient.id}`);

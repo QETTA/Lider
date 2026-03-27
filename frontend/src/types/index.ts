@@ -1,4 +1,4 @@
-// LIDER 요양레이다 타입 정의
+// LIDER B2B AI 플랫폼 타입 정의
 
 // 사용자 (사회복지사/센터장)
 export interface User {

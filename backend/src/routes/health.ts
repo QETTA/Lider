@@ -11,8 +11,8 @@ export async function healthRoutes(fastify: FastifyInstance) {
     return {
       success: true,
       data: {
-        service: 'yoyang-radar-api',
-        version: '1.0.0',
+        service: 'lider-api',
+        version: '2.0.0',
         status: 'healthy',
         scope: 'backend',
         timestamp: new Date().toISOString(),

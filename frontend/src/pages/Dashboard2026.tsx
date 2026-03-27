@@ -1019,7 +1019,7 @@ export function Dashboard2026() {
             <div className="rounded-lg border border-[rgba(71,96,83,0.12)] bg-[rgba(93,119,105,0.12)] p-2 text-[color:var(--brand-700)]">
               <Heart className="h-5 w-5" />
             </div>
-            오늘의 요양보호사 활동
+            오늘의 직원 활동
           </h2>
           <Link to="/elderly" className="text-sm font-medium text-[color:var(--action-700)] hover:text-[color:var(--action-600)]">
             전체 보기
@@ -1030,7 +1030,7 @@ export function Dashboard2026() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[color:var(--border-subtle)]">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-[color:var(--text-muted)]">요양보호사</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-[color:var(--text-muted)]">직원</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold text-[color:var(--text-muted)]">방문 수</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold text-[color:var(--text-muted)]">기록 완료</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold text-[color:var(--text-muted)]">평균 시간</th>

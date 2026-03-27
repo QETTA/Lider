@@ -342,7 +342,7 @@ export function AiAssistantPage() {
                 formData.append('prompt', nextText);
               }
               formData.append('route', '/assistant');
-              formData.append('centerName', '은샘노인재가복지센터');
+              formData.append('centerName', 'LIDER');
               formData.append('mode', activeAttachment.kind === 'spreadsheet' ? 'excel-skill-package' : 'document-skill-package');
               return formData;
             })(),
@@ -360,7 +360,7 @@ export function AiAssistantPage() {
               })),
               context: {
                 route: '/assistant',
-                centerName: '은샘노인재가복지센터',
+                centerName: 'LIDER',
                 mode: 'operations-chat',
               },
             }),

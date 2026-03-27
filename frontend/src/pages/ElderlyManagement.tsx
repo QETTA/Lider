@@ -171,7 +171,7 @@ export function ElderlyManagement() {
   return (
     <div className="space-y-6 pb-8">
       <PageHeader
-        eyebrow="수급자 관리"
+        eyebrow="고객 관리"
         title="어르신 관리 및 핸드오버"
         description="목록, 상세, 기록, 문서, 핸드오버를 같은 뷰 안에서 넘길 수 있도록 운영용 워크스페이스 형태로 정리했습니다."
         icon={Users}
@@ -191,7 +191,7 @@ export function ElderlyManagement() {
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <MetricTile label="전체 수급자" value={elderlyList.length} meta="활성 + 대기 포함" icon={Users} tone="emerald" />
+        <MetricTile label="전체 고객" value={elderlyList.length} meta="활성 + 대기 포함" icon={Users} tone="emerald" />
         <MetricTile label="현재 선택" value={selectedElderly?.name || '-'} meta={selectedElderly ? `${selectedElderly.grade}등급` : '선택 없음'} icon={FileText} tone="sky" />
         <MetricTile label="최근 기록" value={elderlyRecords.length} meta="선택 대상 기준" icon={ClipboardList} tone="violet" />
         <MetricTile label="미완료 문서" value={`${pendingDocs}건`} meta={elderlyDocuments ? `완성률 ${elderlyDocuments.completionRate}%` : '문서 정보 없음'} icon={AlertCircle} tone="amber" />

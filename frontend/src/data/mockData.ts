@@ -1,4 +1,4 @@
-// LIDER MVP 목업 데이터
+// LIDER B2B AI 플랫폼 목업 데이터
 import type {
   Elderly,
   DocumentCompleteness,
@@ -87,9 +87,9 @@ export const mockDocumentCompleteness: DocumentCompleteness[] = [
     completionRate: 45,
     riskLevel: 'critical',
     requiredDocuments: [
-      { id: 'D001', name: '장기요양 인정신청서', status: 'complete', category: 'evaluation', lastUpdated: '2024-01-10' },
+      { id: 'D001', name: '서비스 인정신청서', status: 'complete', category: 'evaluation', lastUpdated: '2024-01-10' },
       { id: 'D002', name: '의사소견서', status: 'expired', category: 'medical', dueDate: '2024-03-01' },
-      { id: 'D003', name: '수급자 신분증 사본', status: 'complete', category: 'contract' },
+      { id: 'D003', name: '고객 신분증 사본', status: 'complete', category: 'contract' },
       { id: 'D004', name: '가족관계증명서', status: 'missing', category: 'contract', dueDate: '2024-03-15' },
       { id: 'D005', name: '건강검진결과서', status: 'incomplete', category: 'medical', dueDate: '2024-03-20' },
     ],
@@ -104,7 +104,7 @@ export const mockDocumentCompleteness: DocumentCompleteness[] = [
     completionRate: 78,
     riskLevel: 'medium',
     requiredDocuments: [
-      { id: 'D006', name: '방문요양 계획서', status: 'complete', category: 'evaluation' },
+      { id: 'D006', name: '방문 서비스 계획서', status: 'complete', category: 'evaluation' },
       { id: 'D007', name: '욕창예방 교육이수증', status: 'missing', category: 'consent', dueDate: '2024-04-01' },
       { id: 'D008', name: '개인정보 수집동의서', status: 'complete', category: 'consent' },
     ],
@@ -119,9 +119,9 @@ export const mockDocumentCompleteness: DocumentCompleteness[] = [
     completionRate: 95,
     riskLevel: 'low',
     requiredDocuments: [
-      { id: 'D009', name: '방문요양 계획서', status: 'complete', category: 'evaluation', lastUpdated: '2024-01-15' },
+      { id: 'D009', name: '방문 서비스 계획서', status: 'complete', category: 'evaluation', lastUpdated: '2024-01-15' },
       { id: 'D010', name: '의사소견서', status: 'complete', category: 'medical', lastUpdated: '2024-01-10' },
-      { id: 'D011', name: '수급자 신분증', status: 'complete', category: 'contract' },
+      { id: 'D011', name: '고객 신분증', status: 'complete', category: 'contract' },
     ],
     missingCritical: [],
     aiRecommendations: ['모든 필수 문서 완료. 다음 평가일: 2026-05-20'],
@@ -319,4 +319,8 @@ export const quickTapOptions: QuickTapOption[] = [
   { id: 'meal_full', label: '다 먹음', emoji: '🍚', value: 'full', color: 'bg-green-100 text-green-700 border-green-300' },
   { id: 'meal_half', label: '반만 먹음', emoji: '🍙', value: 'half', color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
   { id: 'meal_little', label: '조금', emoji: '🥄', value: 'little', color: 'bg-orange-100 text-orange-700 border-orange-300' },
+];
+ },
+];
+0' },
 ];
