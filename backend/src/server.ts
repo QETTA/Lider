@@ -24,8 +24,9 @@ function isTrustedOrigin(origin: string) {
       hostname === 'lider.ai' ||
       hostname.endsWith('.lider.ai') ||
       hostname.endsWith('.workers.dev') ||
-      hostname === 'yoyang-radar.kr' ||
-      hostname.endsWith('.yoyang-radar.kr')
+      hostname === 'lider.ai' ||
+      hostname.endsWith('.lider.ai') ||
+      hostname.endsWith('.sandbox.novita.ai')
     );
   } catch {
     return false;
@@ -47,8 +48,8 @@ function getAllowedOrigins() {
     'http://127.0.0.1:4173',
     'http://localhost:4174',
     'http://127.0.0.1:4174',
-    'https://yoyang-radar.kr',
-    'https://admin.yoyang-radar.kr',
+    'https://lider.ai',
+    'https://app.lider.ai',
     ...configuredOrigins,
   ];
 
@@ -100,12 +101,12 @@ async function registerPlugins() {
   await app.register(swagger, {
     openapi: {
       info: {
-        title: '요양레이다 API',
-        description: '요양/재가복지센터 통합 관리 플랫폼 API',
-        version: '1.0.0',
+        title: 'LIDER API',
+        description: 'AI 업무 오케스트레이션 플랫폼 - 통합 문서 추출, 검색, 업무 자동화 API',
+        version: '2.0.0',
         contact: {
-          name: '요양레이다 팀',
-          email: 'support@yoyang-radar.kr',
+          name: 'LIDER Team',
+          email: 'support@lider.ai',
         },
       },
       servers: [
@@ -114,20 +115,20 @@ async function registerPlugins() {
           description: 'Local development',
         },
         {
-          url: 'https://api.yoyang-radar.kr',
+          url: 'https://api.lider.ai',
           description: 'Production',
         },
       ],
       tags: [
-        { name: 'Auth', description: '인증/세션 관련 엔드포인트' },
+        { name: 'Auth', description: 'Authentication & Session' },
         { name: 'Health', description: 'Health check endpoints' },
-        { name: 'Extract', description: '문서 추출 (평가서/진단서)' },
-        { name: 'Care', description: '수급자/어르신 관리' },
-        { name: 'Mobile', description: '현장 기록 (Mobile Entry)' },
-        { name: 'PublicData', description: '공공데이터포털 연동' },
-        { name: 'AI', description: 'Kimi AI 통합' },
-        { name: 'EMR', description: '병원 EMR 연동 (FHIR/HL7)' },
-        { name: 'LongTermCare', description: '장기요양 특화 기능' },
+        { name: 'Extract', description: 'Document Extraction (PDF, Image, Excel)' },
+        { name: 'Assist', description: 'AI Search & Assistant' },
+        { name: 'Actions', description: 'Workflow Actions & Automation' },
+        { name: 'Documents', description: 'Document Management' },
+        { name: 'AI', description: 'AI Model Integration (Kimi, Claude)' },
+        { name: 'Integrations', description: 'Third-party Integrations' },
+        { name: 'Organizations', description: 'Organization & User Management' },
       ],
     },
   });
@@ -159,7 +160,7 @@ async function start() {
 
     await app.listen({ port, host });
     
-    app.log.info(`🚀 요양레이다 서버 시작됨: http://${host}:${port}`);
+    app.log.info(`🚀 LIDER 서버 시작됨: http://${host}:${port}`);
     app.log.info(`📚 API 문서: http://${host}:${port}/documentation`);
   } catch (err) {
     app.log.error(err);
