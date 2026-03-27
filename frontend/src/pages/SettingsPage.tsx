@@ -125,7 +125,7 @@ export function SettingsPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SectionCard title="센터 기본 정보" description="운영자가 가장 자주 확인하는 센터 메타데이터를 별도 카드로 분리했습니다." icon={Building2}>
           <div className="space-y-3">
-            <SettingRow label="센터명" value="은샘노인재가복지센터" />
+            <SettingRow label="센터명" value="LIDER" />
             <SettingRow label="운영 모드" value="LIDER MVP / Claude AI Helper" />
             <SettingRow label="최근 상태 점검" value={status.checkedAt ? new Date(status.checkedAt).toLocaleString('ko-KR') : '점검 대기'} />
           </div>

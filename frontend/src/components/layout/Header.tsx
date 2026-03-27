@@ -20,7 +20,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <Menu className="w-5 h-5 text-gray-600" />
         </button>
         <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
-          <span>은샘노인재가복지센터</span>
+          <span>LIDER</span>
           <span className="text-gray-300">|</span>
           <span className="text-blue-600 font-medium">관리자</span>
         </div>

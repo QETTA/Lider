@@ -37,11 +37,11 @@ export function Sidebar({ isOpen }: SidebarProps) {
       <div className="h-16 flex items-center px-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">요</span>
+            <span className="text-white font-bold text-lg">L</span>
           </div>
           {isOpen && (
             <div>
-              <h1 className="font-bold text-gray-900">요양레이다</h1>
+              <h1 className="font-bold text-gray-900">LIDER</h1>
               <p className="text-xs text-gray-500">LIDER</p>
             </div>
           )}

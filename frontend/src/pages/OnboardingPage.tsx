@@ -12,7 +12,7 @@ const roles = [
 ];
 
 const centerTypes = [
-  { value: 'home-care', label: '방문요양 중심', description: '방문 기록과 서류 후속이 많은 센터' },
+  { value: 'home-care', label: '방문 서비스 중심', description: '방문 기록과 서류 후속이 많은 센터' },
   { value: 'mixed-care', label: '방문 + 상담 혼합', description: '상담/문서/현장 기록이 함께 움직이는 센터' },
   { value: 'growing-team', label: '확장 중인 신규 팀', description: '기본 운영 문법을 지금 잡아야 하는 팀' },
 ];

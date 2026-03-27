@@ -819,7 +819,7 @@ export function Consultation() {
                 5분 이상 상담 내용을 담으면 핵심 이슈 추출 정확도가 가장 높습니다.
               </div>
               <div className="rounded-2xl bg-[rgba(93,119,105,0.12)] px-4 py-3 text-[color:var(--brand-700)]">
-                가족, 정서, 복약, 문서 이슈처럼 요양 실무 표현을 그대로 말하면 AI 초안이 더 안정적입니다.
+                가족, 정서, 복약, 문서 이슈처럼 실무 표현을 그대로 말하면 AI 초안이 더 안정적입니다.
               </div>
               <div className="rounded-2xl bg-[var(--warning-100)] px-4 py-3 text-[color:var(--warning-600)]">
                 초안을 저장하기 전, 후속 상담 필요 여부와 액션 항목만 빠르게 검토해 주세요.

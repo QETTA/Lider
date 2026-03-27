@@ -146,7 +146,7 @@ function buildRecipientSummary(recipient: RecipientApiRecord): RecipientSummary 
     id: recipient.id,
     name: recipient.name,
     gradeLabel: normalizeGradeLabel(recipient.careGrade),
-    typeLabel: '방문요양',
+    typeLabel: '방문 서비스',
   };
 }
 
@@ -674,7 +674,7 @@ export function MobileEntry() {
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <StatusBadge label="AI 초안" variant="processing" />
                   {draftTarget && <StatusBadge label={`작성 대상 ${draftTarget.name}`} variant="info" />}
-                  <span className="text-sm font-semibold text-[color:var(--brand-700)]">요양특화 문장으로 정리됨</span>
+                  <span className="text-sm font-semibold text-[color:var(--brand-700)]">AI 문장으로 정리됨</span>
                 </div>
                 <textarea
                   value={aiDraft}

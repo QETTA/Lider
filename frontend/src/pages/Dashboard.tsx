@@ -174,14 +174,14 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* 요양보호사 활동 현황 */}
+      {/* 직원 활동 현황 */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">오늘의 요양보호사 활동</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">오늘의 직원 활동</h2>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">요양보호사</th>
+                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">직원</th>
                 <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">방문 수</th>
                 <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">기록 완료</th>
                 <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">평균 시간</th>
